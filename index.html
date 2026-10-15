@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Metadatos, tipografías externas y biblioteca de gráficos. -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#163b38">
+  <meta name="description" content="Aplicación académica para explorar una población con estadística descriptiva, tablas de frecuencia, momentos y gráficos interactivos.">
+  <title>Estadística Descriptiva | UTP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Variables visuales y estilos base compartidos por el cuaderno. */
+    :root {
+      color-scheme: light;
+      --paper: #f4f4ed;
+      --surface: #ffffff;
+      --ink: #183431;
+      --muted: #667673;
+      --line: #dfe6df;
+      --forest: #163b38;
+      --forest-light: #e5efeb;
+      --coral: #d66b4d;
+      --coral-pale: #fff0e9;
+      --gold: #c99a3e;
+      --gold-pale: #fbf3df;
+      --blue: #5878a2;
+      --blue-pale: #eaf0f8;
+      --mint: #4f8f78;
+      --danger: #b54837;
+      --shadow: 0 14px 36px rgba(26, 55, 48, 0.07);
+      --font-body: "Atkinson Hyperlegible", Verdana, sans-serif;
+      --font-display: "Manrope", sans-serif;
+      --font-mono: "DM Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background-color: var(--paper);
+      background-image: radial-gradient(rgba(22, 59, 56, 0.055) 0.7px, transparent 0.7px);
+      background-size: 14px 14px;
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    /* Componentes reutilizables: encabezado, títulos y módulos estadísticos. */
+    .topbar {
+      position: sticky;
+      z-index: 20;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 68px;
+      padding: 0 max(24px, calc((100vw - 1400px) / 2));
+      color: #fff;
+      background: var(--forest);
+      box-shadow: 0 5px 20px rgba(12, 40, 37, 0.12);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-mark {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 11px;
+      color: #ffd98b;
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 800;
+    }
+    .brand-name { font-family: var(--font-display); font-size: 14px; font-weight: 800; line-height: 1.2; }
+    .brand-caption { margin-top: 3px; color: #c1d3ce; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; color: #d3dfdb; font-size: 12px; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #8fd1a8; box-shadow: 0 0 0 4px rgba(143,209,168,.14); }
+    .page { width: min(1400px, 100%); margin: 0 auto; padding: 34px 28px 64px; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 28px;
+      margin-bottom: 25px;
+      padding: 30px 34px;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--forest);
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      position: absolute;
+      top: -95px;
+      right: 17%;
+      width: 290px;
+      height: 290px;
+      border: 1px solid rgba(230, 199, 133, .2);
+      border-radius: 50%;
+      box-shadow: 0 0 0 30px rgba(230,199,133,.035), 0 0 0 65px rgba(230,199,133,.025);
+      content: "";
+      pointer-events: none;
+    }
+    .eyebrow { margin: 0 0 8px; color: #e9bd6c; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 760px; margin-bottom: 9px; font-family: var(--font-display); font-size: clamp(27px, 3vw, 39px); line-height: 1.13; }
+    .hero-copy { max-width: 690px; margin-bottom: 0; color: #c6d7d2; font-size: 14px; }
+    .hero-equation {
+      position: relative;
+      z-index: 1;
+      min-width: 185px;
+      padding: 14px 17px;
+      border: 1px solid rgba(255,255,255,.17);
+      border-radius: 7px;
+      background: rgba(255,255,255,.06);
+      text-align: right;
+    }
+    .hero-equation strong { display: block; color: #f2d28f; font-family: var(--font-mono); font-size: 19px; font-weight: 500; }
+    .hero-equation span { color: #c5d5d0; font-size: 11px; }
+    .module-nav { display: flex; gap: 8px; overflow-x: auto; margin: 0 0 22px; padding: 0 0 5px; scrollbar-width: thin; }
+    .module-nav a {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      border: 1px solid #d8e0d9;
+      border-radius: 5px;
+      color: #49615b;
+      background: rgba(255,255,255,.76);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: background .18s ease, color .18s ease, transform .18s ease;
+    }
+    .module-nav a:hover { transform: translateY(-1px); color: #fff; background: var(--forest); }
+    .section-card {
+      margin-bottom: 19px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      animation: arrive .45s both;
+    }
+    @keyframes arrive { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 17px; }
+    .heading-group { display: flex; align-items: flex-start; gap: 12px; }
+    .module-number {
+      display: grid;
+      flex: 0 0 auto;
+      width: 31px;
+      height: 31px;
+      place-items: center;
+      border-radius: 6px;
+      color: var(--forest);
+      background: var(--forest-light);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .module-number.coral { color: #9c442f; background: var(--coral-pale); }
+    .module-number.gold { color: #8a671f; background: var(--gold-pale); }
+    .module-number.blue { color: #405d84; background: var(--blue-pale); }
+    .section-heading h2 { margin: 0 0 3px; font-family: var(--font-display); font-size: 17px; line-height: 1.25; }
+    .section-heading p { margin: 0; color: var(--muted); font-size: 12px; }
+    .section-tag { padding: 5px 9px; border-radius: 4px; color: #55716a; background: #edf3f0; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+    /* Formularios, controles de importación y estados de validación. */
+    .data-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(270px, .8fr); gap: 20px; }
+    .field-label { display: block; margin-bottom: 7px; color: #334e49; font-size: 12px; font-weight: 700; }
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 116px;
+      resize: vertical;
+      padding: 12px 14px;
+      border: 1px solid #d7e1da;
+      border-radius: 5px;
+      outline: none;
+      color: var(--ink);
+      background: #fbfcfa;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.8;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    textarea:focus, select:focus, input:focus-visible { border-color: var(--mint); box-shadow: 0 0 0 3px rgba(79,143,120,.13); outline: none; }
+    .field-hint { margin: 6px 0 0; color: #75837e; font-size: 11px; }
+    .data-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
+    .button {
+      display: inline-flex;
+      min-height: 38px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 13px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      transition: transform .16s ease, background .16s ease, border-color .16s ease;
+    }
+    .button:hover { transform: translateY(-1px); }
+    .button-primary { color: white; background: var(--forest); }
+    .button-primary:hover { background: #24504a; }
+    .button-outline { border-color: #d3ded6; color: #405b54; background: #fff; }
+    .button-outline:hover { border-color: var(--mint); background: #f5faf6; }
+    .button-soft { color: #99503a; background: var(--coral-pale); }
+    .button-soft:hover { background: #ffe4d9; }
+    .file-box { padding: 15px; border: 1px dashed #c7d6cc; border-radius: 5px; background: #f8faf7; }
+    .file-box p { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
+    input[type="file"] { display: block; width: 100%; color: #586b65; font-size: 11px; }
+    input[type="file"]::file-selector-button {
+      margin-right: 8px;
+      padding: 7px 9px;
+      border: 1px solid #d7e1da;
+      border-radius: 4px;
+      color: var(--forest);
+      background: #fff;
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .file-row { display: flex; gap: 8px; margin-top: 10px; }
+    .file-row .button { min-height: 34px; }
+    .column-picker { display: none; margin-top: 12px; }
+    .column-picker.visible { display: block; }
+    select {
+      min-height: 36px;
+      max-width: 100%;
+      padding: 7px 30px 7px 9px;
+      border: 1px solid #d7e1da;
+      border-radius: 4px;
+      color: var(--ink);
+      background: #fff;
+      font-size: 12px;
+    }
+    .options-row { display: flex; flex-wrap: wrap; align-items: end; gap: 14px; margin-top: 14px; padding-top: 13px; border-top: 1px solid #edf0eb; }
+    .option-group { display: grid; gap: 5px; }
+    .option-group label { color: #6a7b75; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .option-group select { min-width: 175px; }
+    .inline-info { margin-left: auto; color: #75837e; font-size: 11px; }
+    .notice { display: none; margin-top: 13px; padding: 10px 12px; border-radius: 4px; font-size: 12px; }
+    .notice.visible { display: block; }
+    .notice.info { color: #3e5e72; background: #edf5f8; }
+    .notice.warning { color: #86521e; background: #fff4df; }
+    .notice.error { color: #973f34; background: #fff0ed; }
+    .notice.success { color: #2f644f; background: #eaf5ee; }
+    /* Indicadores, resultados y mensajes interpretativos. */
+    .dashboard-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 19px; }
+    .metric-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 110px;
+      padding: 16px 17px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: 0 7px 20px rgba(26,55,48,.045);
+    }
+    .metric-card::after { position: absolute; right: -21px; bottom: -27px; width: 75px; height: 75px; border: 1px solid rgba(79,143,120,.15); border-radius: 50%; content: ""; }
+    .metric-card.coral::after { border-color: rgba(214,107,77,.2); }
+    .metric-card.gold::after { border-color: rgba(201,154,62,.22); }
+    .metric-card.blue::after { border-color: rgba(88,120,162,.19); }
+    .metric-label { display: block; margin-bottom: 7px; color: #71817b; font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+    .metric-value { display: block; color: var(--ink); font-family: var(--font-display); font-size: 25px; font-weight: 800; line-height: 1.12; }
+    .metric-detail { display: block; margin-top: 5px; color: #81908a; font-size: 11px; }
+    .two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 19px; }
+    .three-column { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 19px; }
+    .result-list { display: grid; gap: 0; }
+    .result-row { display: flex; justify-content: space-between; gap: 15px; padding: 10px 0; border-bottom: 1px solid #edf0eb; font-size: 12px; }
+    .result-row:last-child { border-bottom: 0; }
+    .result-row span:first-child { color: #71817b; }
+    .result-row strong { color: var(--ink); font-family: var(--font-mono); font-size: 12px; font-weight: 500; text-align: right; }
+    .interpretation { margin: 12px 0 0; padding: 11px 12px; border-left: 3px solid var(--mint); border-radius: 0 4px 4px 0; color: #46635a; background: #f0f6f1; font-size: 12px; }
+    .interpretation.coral { border-color: var(--coral); color: #81513f; background: #fff5ef; }
+    .interpretation.gold { border-color: var(--gold); color: #78612f; background: #fff9ec; }
+    .interpretation.blue { border-color: var(--blue); color: #4b6280; background: #f0f4fa; }
+    .flag-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+    .flag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid #dce7df; border-radius: 4px; color: #426353; background: #f2f7f2; font-size: 10px; font-weight: 700; }
+    .flag.warn { border-color: #f0dcc1; color: #8c5d23; background: #fff8eb; }
+    .flag.alert { border-color: #f1d1c9; color: #9b4538; background: #fff2ee; }
+    /* Tablas, datos de vista previa y contenedores de gráficos. */
+    .table-wrap { overflow-x: auto; border: 1px solid #e4eae4; border-radius: 5px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
+    th, td { padding: 9px 10px; border-bottom: 1px solid #edf0eb; text-align: right; }
+    th { color: #5b7069; background: #f2f6f2; font-size: 10px; font-weight: 700; }
+    th:first-child, td:first-child { text-align: left; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #f8faf7; }
+    .table-total td { color: var(--forest); background: #f4f7f3; font-weight: 700; }
+    .data-preview {
+      max-height: 170px;
+      overflow: auto;
+      padding: 12px;
+      border-radius: 4px;
+      color: #35544c;
+      background: #f4f7f3;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.9;
+      overflow-wrap: anywhere;
+    }
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .chart-panel { min-width: 0; padding: 14px; border: 1px solid #e6ebe5; border-radius: 5px; background: #fcfdfb; }
+    .chart-panel.wide { grid-column: 1 / -1; }
+    .chart-title { margin: 0 0 12px; color: #435b54; font-size: 12px; font-weight: 700; }
+    .chart-canvas { position: relative; height: 255px; }
+    .chart-panel.wide .chart-canvas { height: 285px; }
+    .chart-note { margin: 8px 0 0; color: #7b8983; font-size: 10px; }
+    .empty-chart { display: grid; height: 100%; place-items: center; color: #89968f; font-size: 12px; }
+    .footnote { display: flex; justify-content: space-between; gap: 16px; margin-top: 20px; padding: 12px 2px 0; border-top: 1px solid #dce4dc; color: #75837c; font-size: 11px; }
+    .mono { font-family: var(--font-mono); }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; clip-path: inset(50%); }
+
+    /* Ajustes del diseño anterior al cuaderno para pantallas pequeñas. */
+    @media (max-width: 960px) {
+      .page { padding: 25px 20px 50px; }
+      .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .three-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .data-grid { grid-template-columns: minmax(0, 1.2fr) minmax(245px, .8fr); }
+    }
+    @media (max-width: 680px) {
+      .topbar { min-height: 60px; padding: 0 16px; }
+      .topbar-right { font-size: 0; }
+      .topbar-right .live-dot { margin-right: 4px; }
+      .page { padding: 18px 13px 40px; }
+      .hero { grid-template-columns: 1fr; gap: 17px; padding: 23px 20px; }
+      .hero::after { right: -60px; }
+      .hero-equation { width: fit-content; min-width: 0; padding: 9px 12px; text-align: left; }
+      .hero-equation strong { font-size: 16px; }
+      .module-nav { margin-right: -13px; }
+      .section-card { padding: 16px 14px; }
+      .section-heading { align-items: flex-start; }
+      .section-tag { display: none; }
+      .data-grid, .two-column, .three-column { grid-template-columns: 1fr; }
+      .dashboard-grid { gap: 9px; }
+      .metric-card { min-height: 98px; padding: 13px; }
+      .metric-value { font-size: 22px; }
+      .inline-info { width: 100%; margin-left: 0; }
+      .chart-grid { grid-template-columns: 1fr; }
+      .chart-panel.wide { grid-column: auto; }
+      .chart-canvas, .chart-panel.wide .chart-canvas { height: 245px; }
+      .footnote { flex-direction: column; gap: 4px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+
+    /* Distribución de la aplicación como cuaderno virtual de páginas. */
+    html, body { width: 100%; height: 100%; max-height: 100%; overflow: hidden; }
+    .notebook-app { display: flex; flex: 1 1 auto; flex-direction: column; width: 100%; min-height: 0; max-height: calc(100vh - 52px); }
+    body {
+      display: flex;
+      flex-direction: column;
+      color: #f8fafc;
+      background: radial-gradient(ellipse at 50% 12%, #172b46 0%, #080f1c 58%, #050912 100%);
+      line-height: 1.5;
+    }
+    .topbar {
+      position: relative;
+      top: auto;
+      flex: 0 0 52px;
+      min-height: 52px;
+      padding: 6px 20px;
+      border-bottom: 1px solid rgba(35, 156, 218, .34);
+      background: rgba(10, 19, 33, .94);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, .38);
+    }
+    .brand-mark { border-color: rgba(44, 178, 231, .42); border-radius: 7px; color: #59d5f3; }
+    .brand-caption { color: #9bb3c8; letter-spacing: .04em; }
+    .topbar-right { color: #a9bfd0; }
+    .notebook-viewport {
+      display: flex;
+      flex: 1 1 auto;
+      width: 100%;
+      min-height: 0;
+      justify-content: center;
+      align-items: stretch;
+      padding: 8px 15px;
+      overflow: hidden;
+      perspective: 1800px;
+    }
+    .notebook-stage {
+      position: relative;
+      display: flex;
+      width: 100%;
+      max-width: 650px;
+      height: 100%;
+      min-height: 0;
+      justify-content: center;
+      align-items: stretch;
+      transition: max-width .38s cubic-bezier(.4, 0, .2, 1);
+    }
+    .notebook-stage.stage-open { max-width: 1560px; perspective: 1500px; }
+    .notebook-stage.stage-closed { max-width: 590px; }
+    .notebook-spine {
+      display: none;
+      z-index: 3;
+      order: 2;
+      flex: 0 0 24px;
+      height: 100%;
+      background:
+        repeating-linear-gradient(to bottom, transparent 0 17px, rgba(58, 189, 229, .78) 18px 21px, transparent 23px 36px),
+        linear-gradient(to right, #08101b, #1d3853 38%, #a8c5d4 50%, #1d3853 62%, #08101b);
+      box-shadow: 0 0 18px rgba(0, 0, 0, .72), inset 0 0 9px rgba(0, 0, 0, .6);
+    }
+    /* Una página permanece oculta hasta que JavaScript la marca como activa. */
+    .notebook-page {
+      position: relative;
+      display: none;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid rgba(161, 199, 220, .75);
+      border-radius: 13px;
+      color: #1e293b;
+      background-color: #fff;
+      background-image: url("imagenes/hojas_cuaderno.png");
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, .55), 0 0 24px rgba(32, 153, 213, .15);
+    }
+    .notebook-page.active { display: flex; flex-direction: column; }
+    .notebook-page.page-left { order: 1; border-top-right-radius: 2px; border-bottom-right-radius: 2px; box-shadow: inset -20px 0 24px -17px rgba(12, 37, 57, .35), -8px 15px 32px rgba(0,0,0,.35); }
+    .notebook-page.page-right { order: 3; border-top-left-radius: 2px; border-bottom-left-radius: 2px; box-shadow: inset 20px 0 24px -17px rgba(12, 37, 57, .35), 8px 15px 32px rgba(0,0,0,.35); }
+    .notebook-page.page-enter { animation: notebookPageEnter .45s ease both; }
+    @keyframes notebookPageEnter { from { opacity: .55; transform: translateY(5px) rotateY(-1.4deg); } to { opacity: 1; transform: none; } }
+    .notebook-page.page-cover { padding: 0; background: #fff; }
+    .notebook-stage.stage-closed .notebook-page.page-cover {
+      align-self: center;
+      width: min(100%, calc((100vh - 126px) * .75));
+      height: min(100%, calc((100vw - 12px) * 1.333333));
+    }
+    .cover-image-container { position: relative; flex: 1; min-height: 0; overflow: hidden; border-radius: inherit; background: #f7fbff; }
+    .cover-image-container img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .notebook-page.page-cover { justify-content: center; }
+    .cover-image-container { flex: 1 1 auto; width: 100%; height: 100%; }
+    /* Cabeceras de página, contenido desplazable y controles de navegación. */
+    .page-content-wrapper { flex: 1; min-height: 0; overflow: auto; padding: 26px 34px 30px; scrollbar-color: #8bb9d0 #eef4f7; scrollbar-width: thin; }
+    .page-header-banner { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 19px; padding-bottom: 9px; border-bottom: 1px solid #c7dce8; color: #376785; font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+    .page-number-tag { color: #71879a; white-space: nowrap; }
+    .page-title { margin: 0 0 5px; color: #173b5a; font-family: var(--font-display); font-size: 23px; line-height: 1.22; }
+    .page-subtitle { margin: 0 0 17px; color: #62798a; font-size: 12px; }
+    .notebook-page .section-card { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; animation: none; }
+    .notebook-page .section-heading { padding: 10px 0 13px; border-bottom: 1px solid #dce7ed; }
+    .notebook-page .section-heading h2 { color: #1a3f5d; }
+    .notebook-page .section-heading p { color: #657b89; }
+    .notebook-page .field-label { color: #38566a; }
+    .notebook-page .field-hint { color: #738694; }
+    .notebook-page .inline-info { flex: 0 0 100%; width: 100%; min-width: 0; margin-left: 0; overflow-wrap: anywhere; }
+    .notebook-page .metric-card { box-shadow: 0 4px 12px rgba(25, 66, 91, .06); }
+    .notebook-page .section-card + .section-card { margin-top: 16px; }
+    .notebook-page .module-number { border-radius: 4px; }
+    .page-bottom-note { display: flex; justify-content: space-between; gap: 12px; margin-top: 17px; padding-top: 8px; border-top: 1px solid #d6e4ec; color: #73899a; font-size: 10px; }
+    .bottom-control-bar {
+      z-index: 10;
+      display: flex;
+      flex: 0 0 auto;
+      min-height: 58px;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 16px;
+      border-top: 1px solid rgba(57, 169, 214, .3);
+      background: rgba(10, 19, 33, .97);
+      box-shadow: 0 -5px 18px rgba(0,0,0,.3);
+    }
+    .nav-buttons-cluster { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; }
+    .nav-btn { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; gap: 6px; padding: 6px 11px; border: 1px solid rgba(160, 187, 205, .25); border-radius: 4px; color: #d4e2ea; background: rgba(255,255,255,.055); font-size: 11px; font-weight: 600; transition: .18s ease; }
+    .nav-btn:hover:not(:disabled) { border-color: #1da5df; color: #65d4f5; background: rgba(17, 125, 181, .16); }
+    .nav-btn:disabled { opacity: .38; cursor: not-allowed; }
+    .nav-btn.primary { border-color: #137fb3; color: white; background: #0876a8; }
+    .nav-btn.primary:hover:not(:disabled) { background: #0d91c8; }
+    .page-indicator-select { width: min(440px, 45vw); min-height: 34px; border-color: rgba(160, 187, 205, .24); color: #e5eef3; background-color: #12243a; font-size: 11px; }
+    .page-indicator-select option { color: #e5eef3; background: #12243a; }
+    .page-position { min-width: 95px; color: #94aabd; font-family: var(--font-mono); font-size: 10px; text-align: center; }
+    .notebook-page .notice.visible { display: block; }
+    .notebook-page .chart-panel { background: rgba(255,255,255,.88); }
+    .notebook-page .table-wrap { background: rgba(255,255,255,.93); }
+    .notebook-page .file-box { background: rgba(247,250,252,.92); }
+    .notebook-page .page-content-wrapper > .section-card { min-height: 100%; }
+    /* En escritorio se muestran dos páginas; en móvil se muestra una. */
+    @media (min-width: 1024px) {
+      .notebook-stage.stage-open .notebook-spine { display: block; }
+      .notebook-stage.stage-open .notebook-page.active { flex: 1 1 0; width: 0; }
+    }
+    @media (max-width: 1023px) {
+      .notebook-viewport { padding: 7px 10px; }
+      .notebook-stage, .notebook-stage.stage-closed, .notebook-stage.stage-open { width: 100%; max-width: 760px; }
+      .notebook-stage.stage-open .notebook-spine { display: none; }
+      .notebook-stage.stage-open .notebook-page.active { width: 100%; border-radius: 10px; }
+      .notebook-stage.stage-open .notebook-page.page-left, .notebook-stage.stage-open .notebook-page.page-right { order: initial; }
+      .page-content-wrapper { padding: 22px 25px 27px; }
+    }
+    @media (max-width: 620px) {
+      .topbar { flex-basis: 48px; min-height: 48px; padding: 5px 11px; }
+      .brand { gap: 8px; }
+      .brand-mark { width: 32px; height: 32px; font-size: 17px; }
+      .brand-name { font-size: 12px; }
+      .brand-caption { font-size: 9px; }
+      .topbar-right { gap: 7px; font-size: 0; }
+      .notebook-viewport { padding: 6px; }
+      .notebook-page { border-radius: 8px; }
+      .page-content-wrapper { padding: 17px 15px 23px; }
+      .page-header-banner { font-size: 9px; }
+      .page-title { font-size: 20px; }
+      .notebook-page .data-grid, .notebook-page .two-column, .notebook-page .three-column { grid-template-columns: 1fr; }
+      .notebook-page .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .bottom-control-bar { min-height: 58px; padding: 7px 6px; }
+      .nav-buttons-cluster { gap: 4px; }
+      .nav-btn { min-height: 34px; padding: 5px 7px; font-size: 10px; }
+      .nav-btn .wide-label { display: none; }
+      .page-indicator-select { width: min(190px, 42vw); padding-left: 5px; font-size: 10px; }
+      .page-position { display: none; }
+      .notebook-page .chart-grid { grid-template-columns: 1fr; }
+      .notebook-page .chart-panel.wide { grid-column: auto; }
+    }
+    /* Tipografía ampliada y estilos de fórmulas para lectura dentro del cuaderno. */
+    .notebook-page .page-header-banner { font-size: 13px; }
+    .notebook-page .page-title { font-size: 28px; }
+    .notebook-page .page-subtitle { color: #465f70; font-size: 16px; }
+    .notebook-page .section-heading h2 { font-size: 22px; }
+    .notebook-page .section-heading p { color: #465f70; font-size: 16px; }
+    .notebook-page .field-label { font-size: 16px; }
+    .notebook-page .field-hint { color: #435d6b; font-size: 14px; }
+    .notebook-page .file-box p { color: #435d6b; font-size: 15px; }
+    .notebook-page textarea, .notebook-page select, .notebook-page input[type="file"] { font-size: 15px; }
+    .notebook-page .button { font-size: 14px; }
+    .notebook-page .inline-info { font-size: 14px; }
+    .notebook-page .metric-label { font-size: 13px; }
+    .notebook-page .metric-detail { color: #485f6b; font-size: 13px; }
+    .notebook-page .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .notebook-page .data-grid { grid-template-columns: 1fr; }
+    .notebook-page .three-column { grid-template-columns: 1fr; gap: 10px; }
+    .notebook-page .chart-grid { grid-template-columns: 1fr; }
+    .notebook-page .chart-panel.wide { grid-column: auto; }
+    .notebook-page .section-tag { font-size: 12px; }
+    .notebook-page .result-row { color: #213b48; font-size: 15px; }
+    .notebook-page .result-row span:first-child { color: #4a626f; }
+    .notebook-page .result-row strong { font-size: 15px; }
+    .notebook-page .interpretation { font-size: 15px; }
+    /* Presentación de fórmulas, pasos de cuantiles y fórmulas de varianza. */
+    .formula-sheet { margin-top: 16px; padding: 14px 16px; border-left: 4px solid #347d9d; border-radius: 0 5px 5px 0; background: rgba(233, 243, 248, .94); }
+    .formula-sheet h3 { margin: 0 0 9px; color: #204d67; font-family: var(--font-display); font-size: 16px; }
+    .formula-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; margin: 0; padding: 0; list-style: none; }
+    .formula-list li { min-width: 0; color: #385765; font-size: 13px; line-height: 1.45; }
+    .formula-list strong { display: block; margin-bottom: 2px; color: #244b60; font-size: 13px; }
+    .formula-list code { display: block; color: #203f52; font-family: var(--font-mono); font-size: 13px; line-height: 1.8; white-space: normal; overflow-wrap: anywhere; }
+    .formula-frac { display: inline-grid; min-width: 1.3em; justify-items: center; margin: 0 3px; vertical-align: middle; font: inherit; line-height: 1.1; white-space: nowrap; }
+    .formula-frac > span:first-child { padding: 0 4px 2px; border-bottom: 1px solid currentColor; }
+    .formula-frac > span:last-child { padding: 2px 4px 0; }
+    .position-steps { display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; }
+    .position-step { min-width: 0; padding: 11px; border: 1px solid #d5e2e7; border-top: 3px solid #347d9d; border-radius: 4px; background: #fff; }
+    .position-step-number { display: block; margin-bottom: 4px; color: #347d9d; font-family: var(--font-mono); font-size: 11px; font-weight: 500; }
+    .position-step h4 { margin: 0 0 6px; color: #244b60; font-family: var(--font-display); font-size: 13px; }
+    .position-step code { display: block; color: #203f52; font-family: var(--font-mono); font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+    .formula-note { margin: 8px 0 0; color: #496575; font-size: 12px; }
+    .variance-formulas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .variance-formula { padding: 12px; border: 1px solid #d5e2e7; border-radius: 5px; background: #fff; }
+    .variance-formula.active { border-color: #347d9d; box-shadow: inset 0 0 0 1px #347d9d; background: #f6fbfd; }
+    .variance-formula h4 { margin: 0 0 7px; color: #244b60; font-family: var(--font-display); font-size: 13px; }
+    .math-line { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-height: 34px; color: #203f52; font-family: var(--font-mono); font-size: 14px; }
+    .math-frac { display: inline-grid; vertical-align: middle; justify-items: center; line-height: 1.15; }
+    .math-frac > span:first-child { padding: 0 4px 2px; border-bottom: 1px solid currentColor; }
+    .math-frac > span:last-child { padding: 2px 4px 0; }
+    .math-note { margin: 4px 0 0; color: #526c78; font-size: 12px; }
+    .notebook-page .flag { font-size: 13px; }
+    .notebook-page table { font-size: 14px; }
+    .notebook-page th { font-size: 13px; }
+    .notebook-page .data-preview { font-size: 13px; }
+    .notebook-page .chart-title { font-size: 16px; }
+    .notebook-page .chart-note { color: #435d6b; font-size: 13px; }
+    .notebook-page .page-bottom-note { font-size: 13px; }
+    .nav-btn, .page-indicator-select { font-size: 12px; }
+    .page-position { font-size: 11px; }
+    @media (max-width: 620px) {
+      .notebook-page .page-title { font-size: 24px; }
+      .notebook-page .page-header-banner { font-size: 11px; }
+      .nav-btn { font-size: 11px; }
+      .page-indicator-select { font-size: 11px; }
+      .formula-list { grid-template-columns: 1fr; gap: 7px; }
+      .formula-sheet { padding: 12px; }
+      .variance-formulas { grid-template-columns: 1fr; }
+      .position-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">Σ</div>
+      <div>
+        <div class="brand-name">Cuaderno Virtual de Estadística</div>
+        <div class="brand-caption">Estadística · Ingeniería en Sistemas · UTP</div>
+      </div>
+    </div>
+    <div class="topbar-right"><span class="live-dot" aria-hidden="true"></span><span>Análisis local en el navegador</span><button class="nav-btn" id="btnFullscreen" type="button" title="Pantalla completa">⛶</button></div>
+  </header>
+
+  <main class="notebook-app">
+    <div class="notebook-viewport">
+      <div class="notebook-stage stage-closed" id="notebookStage">
+        <div class="notebook-spine" id="notebookSpine" aria-hidden="true"></div>
+        <!-- Portada del cuaderno; las páginas temáticas se activan desde los controles inferiores. -->
+        <section class="notebook-page page-cover active" id="page-cover" aria-label="Cubierta del cuaderno virtual">
+          <div class="cover-image-container">
+            <img src="imagenes/portada.png" alt="Portada del cuaderno virtual de Análisis Estadístico, UTP">
+          </div>
+        </section>
+
+        <!-- Página 1: entrada de datos, selección de variable y validación. -->
+        <section class="notebook-page" id="page-1" aria-labelledby="gestion-title">
+          <div class="page-content-wrapper">
+            <div class="page-header-banner"><span class="unit-label">Unidad I · Datos y población</span><span class="page-number-tag">Página 1 de 8</span></div>
+    <section class="section-card" id="gestion" aria-labelledby="gestion-title">
+      <div class="section-heading">
+        <div class="heading-group"><span class="module-number">01</span><div><h2 id="gestion-title">Gestión e identificación de datos</h2><p>Ingresa observaciones de una población o una muestra, o carga una columna desde un archivo.</p></div></div>
+        <span class="section-tag">Entrada y validación</span>
+      </div>
+      <div class="data-grid">
+        <div>
+          <label class="field-label" for="dataInput">Observaciones</label>
+          <textarea id="dataInput" spellcheck="false" aria-describedby="dataHint" placeholder="Ejemplo: 12.4, 15.8, 16.1&#10;18.2  20.5"></textarea>
+          <p class="field-hint" id="dataHint">Separa valores con comas, espacios, punto y coma o saltos de línea. Usa punto para los decimales.</p>
+          <div class="data-actions">
+            <button class="button button-primary" id="analyzeButton" type="button"><span aria-hidden="true">↗</span> Analizar datos</button>
+            <button class="button button-soft" id="sampleButton" type="button"><span aria-hidden="true">✳</span> Cargar datos de ejemplo</button>
+            <button class="button button-outline" id="clearButton" type="button">Limpiar</button>
+          </div>
+        </div>
+        <div>
+          <div class="file-box">
+            <label class="field-label" for="fileInput">Importar archivo CSV o TXT</label>
+            <p>Para CSV con varias columnas, selecciona la variable cuantitativa que quieres analizar.</p>
+            <input id="fileInput" type="file" accept=".csv,.txt,text/csv,text/plain">
+            <div class="column-picker" id="columnPicker">
+              <label class="field-label" for="columnSelect">Columna de análisis</label>
+              <div class="file-row">
+                <select id="columnSelect" aria-label="Columna para importar"></select>
+                <button class="button button-primary" id="importButton" type="button">Cargar columna</button>
+              </div>
+            </div>
+          </div>
+          <div class="options-row">
+            <div class="option-group">
+              <label for="dataScope">Tipo de conjunto</label>
+              <select id="dataScope">
+                <option value="population">Población completa</option>
+                <option value="sample">Muestra</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label for="variableType">Tipo de variable</label>
+              <select id="variableType">
+                <option value="auto">Automático (según valores)</option>
+                <option value="discrete">Cuantitativa discreta</option>
+                <option value="continuous">Cuantitativa continua</option>
+              </select>
+            </div>
+            <div class="option-group">
+              <label for="groupingMode">Tabla de frecuencias</label>
+              <select id="groupingMode">
+                <option value="auto">Automática</option>
+                <option value="grouped">Agrupada · Sturges</option>
+                <option value="raw">Sin agrupar</option>
+              </select>
+            </div>
+            <span class="inline-info" id="scopeHint">Población completa: varianza con divisor N.</span>
+          </div>
+        </div>
+      </div>
+      <div class="notice" id="dataNotice" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="dashboard-grid" aria-label="Resumen de los datos">
+      <article class="metric-card"><span class="metric-label" id="countMetricLabel">Población válida · N</span><strong class="metric-value" id="metricN">—</strong><span class="metric-detail" id="metricNDetail">Carga observaciones para comenzar</span></article>
+      <article class="metric-card coral"><span class="metric-label">Tipo de variable</span><strong class="metric-value" id="metricType">—</strong><span class="metric-detail" id="metricTypeDetail">Clasificación de los valores</span></article>
+      <article class="metric-card gold"><span class="metric-label" id="meanMetricLabel">Media poblacional · μ</span><strong class="metric-value" id="metricMean">—</strong><span class="metric-detail" id="metricMeanDetail">Centro aritmético</span></article>
+      <article class="metric-card blue"><span class="metric-label" id="sigmaMetricLabel">Desviación · σ</span><strong class="metric-value" id="metricSigma">—</strong><span class="metric-detail" id="metricSigmaDetail">Dispersión en unidades originales</span></article>
+    </section>
+    <aside class="formula-sheet" aria-label="Fórmulas de gestión e identificación de datos">
+      <h3>Fórmulas utilizadas</h3>
+      <ul class="formula-list">
+        <li><strong>Tamaño del conjunto válido</strong><code><span class="count-symbol">N</span> = Σᵢ 1(xᵢ válido)</code></li>
+        <li><strong>Media del conjunto</strong><code><span class="mean-symbol">μ</span> = <span class="formula-frac"><span>Σᵢ xᵢ</span><span class="count-symbol">N</span></span></code></li>
+        <li><strong>Desviación del conjunto</strong><code><span class="sd-symbol">σ</span> = √[<span class="formula-frac variance-divisor"><span>1</span><span class="count-symbol">N</span></span> · Σᵢ (xᵢ − <span class="mean-symbol">μ</span>)²]</code></li>
+        <li><strong>Identificación automática</strong><code>Discreta: conteos enteros; continua: mediciones en escala continua</code></li>
+      </ul>
+      <p class="formula-note">La clasificación automática por enteros es una sugerencia; confirma el tipo según el significado de la variable.</p>
+    </aside>
+          </div>
+        </section>
+
+        <!-- Página 2: ordenamiento y tabla de frecuencias. -->
+        <section class="notebook-page" id="page-2" aria-labelledby="organization-title">
+          <div class="page-content-wrapper">
+            <div class="page-header-banner"><span class="unit-label">Unidad I · Organización</span><span class="page-number-tag">Página 2 de 8</span></div>
+    <section class="section-card" id="organizacion" aria-labelledby="organization-title">
+      <div class="section-heading">
+        <div class="heading-group"><span class="module-number coral">02</span><div><h2 id="organization-title">Organización de datos</h2><p>Orden ascendente y descendente; distribución de frecuencias verificable.</p></div></div>
+        <span class="section-tag" id="frequencyModeTag">Regla de Sturges</span>
+      </div>
+      <div class="two-column" style="margin-bottom:18px">
+        <div><span class="field-label">Orden ascendente</span><div class="data-preview" id="ascendingData">—</div></div>
+        <div><span class="field-label">Orden descendente</span><div class="data-preview" id="descendingData">—</div></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Intervalo / valor</th><th>Marca Xᵢ</th><th>fᵢ</th><th>hᵢ</th><th>hᵢ (%)</th><th>Fᵢ</th><th>Hᵢ</th><th>Hᵢ (%)</th></tr></thead>
+          <tbody id="frequencyBody"><tr><td colspan="8" style="text-align:center;color:#81908a">Carga datos para construir la tabla.</td></tr></tbody>
+          <tfoot id="frequencyFoot"></tfoot>
+        </table>
+      </div>
+      <p class="field-hint" id="frequencyNote">Sturges: k = 1 + 3.322 log₁₀(N). Los límites se ajustan para incluir el máximo en la última clase.</p>
+    </section>
+    <aside class="formula-sheet" aria-label="Fórmulas de distribución de frecuencias">
+      <h3>Fórmulas utilizadas</h3>
+      <ul class="formula-list">
+        <li><strong>Número de clases · Sturges</strong><code>k = redondear[1 + 3.322 log₁₀(<span class="count-symbol">N</span>)]</code></li>
+        <li><strong>Rango y amplitud</strong><code>R = xₘₐₓ − xₘᵢₙ; a = <span class="formula-frac"><span>R</span><span>k</span></span></code></li>
+        <li><strong>Marca de clase</strong><code>Xᵢ = <span class="formula-frac"><span>Lᵢ + Uᵢ</span><span>2</span></span></code></li>
+        <li><strong>Frecuencias</strong><code>hᵢ = <span class="formula-frac"><span>fᵢ</span><span class="count-symbol">N</span></span>; Fᵢ = Σⱼ≤ᵢ fⱼ; Hᵢ = Σⱼ≤ᵢ hⱼ</code></li>
+      </ul>
+      <p class="formula-note">Para datos sin agrupar, cada fila corresponde a un valor distinto; si R = 0 se usa una sola clase.</p>
+    </aside>
+          </div>
+        </section>
+
+        <!-- Página 3: media, mediana y moda. -->
+        <section class="notebook-page" id="page-3" aria-labelledby="central-title">
+          <div class="page-content-wrapper">
+            <div class="page-header-banner"><span class="unit-label">Unidad II · Tendencia central</span><span class="page-number-tag">Página 3 de 8</span></div>
+      <section class="section-card" id="central" aria-labelledby="central-title">
+        <div class="section-heading"><div class="heading-group"><span class="module-number gold">03</span><div><h2 id="central-title">Tendencia central</h2><p>Centro de la distribución observada.</p></div></div></div>
+        <div class="result-list">
+          <div class="result-row"><span id="meanResultLabel">Media poblacional · μ</span><strong id="meanValue">—</strong></div>
+          <div class="result-row"><span>Mediana · x̃ (Q₂)</span><strong id="medianValue">—</strong></div>
+          <div class="result-row"><span>Moda · Mo</span><strong id="modeValue">—</strong></div>
+          <div class="result-row"><span>Clasificación modal</span><strong id="modeType">—</strong></div>
+        </div>
+        <p class="interpretation" id="centralInterpretation">La media usa todas las magnitudes; mediana y moda complementan la lectura del centro.</p>
+      </section>
+    <aside class="formula-sheet" aria-label="Fórmulas de tendencia central">
+      <h3>Fórmulas utilizadas</h3>
+      <ul class="formula-list">
+        <li><strong>Media del conjunto</strong><code><span class="mean-symbol">μ</span> = <span class="formula-frac"><span>Σᵢ xᵢ</span><span class="count-symbol">N</span></span></code></li>
+        <li><strong>Mediana ordenada</strong><code><span class="count-symbol">N</span> impar: posición <span class="formula-frac"><span><span class="count-symbol">N</span> + 1</span><span>2</span></span></code><code><span class="count-symbol">N</span> par: i = <span class="formula-frac"><span class="count-symbol">N</span><span>2</span></span>; mediana = <span class="formula-frac"><span>xᵢ + xᵢ₊₁</span><span>2</span></span></code></li>
+        <li><strong>Moda</strong><code>Mo = arg maxₓ f(x)</code></li>
+        <li><strong>Clasificación modal</strong><code>Unimodal: un máximo; multimodal: varios; amodal: todas fᵢ = 1</code></li>
+      </ul>
+    </aside>
+          </div>
+        </section>
+
+        <!-- Página 4: cuartiles y rango intercuartílico. -->
+        <section class="notebook-page" id="page-4" aria-labelledby="position-title">
+          <div class="page-content-wrapper">
+            <div class="page-header-banner"><span class="unit-label">Unidad II · Medidas de posición</span><span class="page-number-tag">Página 4 de 8</span></div>
+      <section class="section-card" id="posicion" aria-labelledby="position-title">
+        <div class="section-heading"><div class="heading-group"><span class="module-number blue">04</span><div><h2 id="position-title">Medidas de posición</h2><p>Cuartiles por interpolación lineal.</p></div></div></div>
+        <div class="result-list">
+          <div class="result-row"><span>Primer cuartil · Q₁</span><strong id="q1Value">—</strong></div>
+          <div class="result-row"><span>Segundo cuartil · Q₂</span><strong id="q2Value">—</strong></div>
+          <div class="result-row"><span>Tercer cuartil · Q₃</span><strong id="q3Value">—</strong></div>
+          <div class="result-row"><span>Rango intercuartílico · RIC</span><strong id="iqrValue">—</strong></div>
+        </div>
+        <p class="interpretation blue" id="positionInterpretation">La mitad central de los datos se encuentra entre Q₁ y Q₃.</p>
+      </section>
+    <aside class="formula-sheet" aria-label="Fórmulas de cuartiles y medidas de posición">
+      <h3>Cómo se calculan los cuartiles</h3>
+      <div class="position-steps">
+        <article class="position-step"><span class="position-step-number">PASO 1</span><h4>Ubica la posición</h4><code>p ∈ {0.25, 0.50, 0.75}</code><code>rₚ = 1 + (<span class="count-symbol">N</span> − 1)p</code></article>
+        <article class="position-step"><span class="position-step-number">PASO 2</span><h4>Busca los valores vecinos</h4><code>j = floor(rₚ)</code><code>α = rₚ − j</code><code>Si α = 0: Qₚ = xⱼ</code></article>
+        <article class="position-step"><span class="position-step-number">PASO 3</span><h4>Interpola si hace falta</h4><code>Qₚ = (1 − α)xⱼ + αxⱼ₊₁</code><code>0 &lt; α &lt; 1</code></article>
+      </div>
+      <p class="formula-note">Los datos se ordenan de menor a mayor y se numeran desde 1. α indica qué parte del tramo entre los dos valores vecinos se recorre. El rango intercuartílico es RIC = Q₃ − Q₁; se mantiene esta convención en la caja y la regla de Tukey.</p>
+    </aside>
+          </div>
+        </section>
+
+        <!-- Página 5: rango, varianza, desviación estándar y coeficiente de variación. -->
+        <section class="notebook-page" id="page-5" aria-labelledby="dispersion-title">
+          <div class="page-content-wrapper">
+            <div class="page-header-banner"><span class="unit-label">Unidad III · Dispersión</span><span class="page-number-tag">Página 5 de 8</span></div>
+      <section class="section-card" id="dispersion" aria-labelledby="dispersion-title">
+        <div class="section-heading"><div class="heading-group"><span class="module-number coral">05</span><div><h2 id="dispersion-title">Medidas de dispersión</h2><p>Variabilidad absoluta y relativa de los datos.</p></div></div></div>
+        <div class="result-list">
+          <div class="result-row"><span>Mínimo · Xmin</span><strong id="minValue">—</strong></div>
+          <div class="result-row"><span>Máximo · Xmax</span><strong id="maxValue">—</strong></div>
+          <div class="result-row"><span>Rango · R</span><strong id="rangeValue">—</strong></div>
+          <div class="result-row"><span id="varianceResultLabel">Varianza poblacional · σ²</span><strong id="varianceValue">—</strong></div>
+          <div class="result-row"><span id="sigmaResultLabel">Desviación estándar poblacional · σ</span><strong id="sigmaValue">—</strong></div>
+          <div class="result-row"><span>Coeficiente de variación · CV</span><strong id="cvValue">—</strong></div>
+        </div>
+        <p class="interpretation coral" id="dispersionInterpretation">El CV compara la desviación con la magnitud de la media; no es útil si la media es cercana a cero.</p>
+      </section>
+    <aside class="formula-sheet" aria-label="Fórmulas de medidas de dispersión">
+      <h3>Fórmulas utilizadas</h3>
+      <ul class="formula-list">
+        <li><strong>Rango</strong><code>R = xₘₐₓ − xₘᵢₙ</code></li>
+        <li><strong>Coeficiente de variación</strong><code>CV = <span class="formula-frac"><span class="sd-symbol">σ</span><span>|<span class="mean-symbol">μ</span>|</span></span> × 100%</code></li>
+      </ul>
+      <div class="variance-formulas" aria-label="Fórmulas de varianza y desviación estándar para población y muestra">
+        <article class="variance-formula" id="populationFormula">
+          <h4>Población completa</h4>
+          <div class="math-line"><span>σ² =</span><span class="math-frac"><span>Σᵢ₌₁ᴺ (xᵢ − μ)²</span><span>N</span></span></div>
+          <div class="math-line"><span>σ = √σ²</span></div>
+          <p class="math-note">Se divide entre todas las N observaciones.</p>
+        </article>
+        <article class="variance-formula" id="sampleFormula">
+          <h4>Muestra</h4>
+          <div class="math-line"><span>s² =</span><span class="math-frac"><span>Σᵢ₌₁ⁿ (xᵢ − x̄)²</span><span>n − 1</span></span></div>
+          <div class="math-line"><span>s = √s²</span></div>
+          <p class="math-note">La corrección n − 1 estima la varianza de la población.</p>
+        </article>
+      </div>
+      <p class="formula-note">El CV usa la desviación y la media del conjunto seleccionado; no se define si la media es cero y puede ser inestable si está cerca de cero. Los momentos de forma son descriptivos y no aplican corrección de sesgo muestral.</p>
+    </aside>
+          </div>
+        </section>
+
+        <!-- Página 6: posibles valores atípicos según la regla de Tukey. -->
+        <section class="notebook-page" id="page-6" aria-labelledby="outlier-title">
+          <div class="page-content-wrapper">
+            <div class="page-header-banner"><span class="unit-label">Unidad III · Atípicos</span><span class="page-number-tag">Página 6 de 8</span></div>
+      <section class="section-card" id="atipicos" aria-labelledby="outlier-title">
+        <div class="section-heading"><div class="heading-group"><span class="module-number gold">06</span><div><h2 id="outlier-title">Detección de valores atípicos</h2><p>Regla de Tukey: límites Q₁ − 1.5 RIC y Q₃ + 1.5 RIC.</p></div></div></div>
+        <div class="result-list">
+          <div class="result-row"><span>Límite inferior · LI</span><strong id="lowerFence">—</strong></div>
+          <div class="result-row"><span>Límite superior · LS</span><strong id="upperFence">—</strong></div>
+          <div class="result-row"><span>Observaciones detectadas</span><strong id="outlierCount">—</strong></div>
+          <div class="result-row"><span>Valores fuera de límites</span><strong id="outlierValues">—</strong></div>
+        </div>
+        <div class="flag-row" id="outlierFlags"><span class="flag">Sin análisis</span></div>
+        <p class="interpretation gold">Son posibles atípicos para revisión, no errores confirmados. Ningún dato se elimina automáticamente.</p>
+      </section>
+    <aside class="formula-sheet" aria-label="Fórmulas de detección de valores atípicos">
+      <h3>Fórmulas utilizadas</h3>
+      <ul class="formula-list">
+        <li><strong>Límite inferior</strong><code>LI = Q₁ − 1.5 RIC</code></li>
+        <li><strong>Límite superior</strong><code>LS = Q₃ + 1.5 RIC</code></li>
+        <li><strong>Regla de clasificación</strong><code>xᵢ es posible atípico si xᵢ &lt; LI o xᵢ &gt; LS</code></li>
+        <li><strong>Rango intercuartílico</strong><code>RIC = Q₃ − Q₁</code></li>
+      </ul>
+      <p class="formula-note">Los valores fuera de los límites se marcan para revisión y no se eliminan automáticamente.</p>
+    </aside>
+          </div>
+        </section>
+
+        <!-- Página 7: momentos centrales, asimetría y exceso de curtosis. -->
+        <section class="notebook-page" id="page-7" aria-labelledby="moments-title">
+          <div class="page-content-wrapper">
+            <div class="page-header-banner"><span class="unit-label">Unidad IV · Momentos estadísticos</span><span class="page-number-tag">Página 7 de 8</span></div>
+    <section class="section-card" id="momentos" aria-labelledby="moments-title">
+      <div class="section-heading"><div class="heading-group"><span class="module-number blue">07</span><div><h2 id="moments-title">Momentos estadísticos</h2><p>Momentos centrales descriptivos y coeficientes estandarizados.</p></div></div><span class="section-tag">Fisher · Pearson menos 3</span></div>
+      <div class="three-column">
+        <div>
+          <div class="result-list">
+            <div class="result-row"><span>Primer momento · m₁</span><strong id="mu1Value">—</strong></div>
+            <div class="result-row"><span>Segundo momento descriptivo · m₂</span><strong id="mu2Value">—</strong></div>
+            <div class="result-row"><span>Tercer momento · m₃</span><strong id="mu3Value">—</strong></div>
+            <div class="result-row"><span>Cuarto momento · m₄</span><strong id="mu4Value">—</strong></div>
+          </div>
+        </div>
+        <div>
+          <div class="result-row"><span>Asimetría · γ₁ = <span class="formula-frac"><span>m₃</span><span>m₂³ᐟ²</span></span></span><strong id="skewValue">—</strong></div>
+          <div class="flag-row" id="skewFlag"><span class="flag">Sin análisis</span></div>
+          <p class="interpretation blue" id="skewInterpretation">El signo de γ₁ orienta sobre la cola más influyente; contrástalo con el histograma.</p>
+        </div>
+        <div>
+          <div class="result-row"><span>Exceso de curtosis · γ₂</span><strong id="kurtosisValue">—</strong></div>
+          <div class="flag-row" id="kurtosisFlag"><span class="flag">Sin análisis</span></div>
+          <p class="interpretation gold" id="kurtosisInterpretation">La curtosis no es por sí sola un conteo de valores atípicos.</p>
+        </div>
+      </div>
+      <p class="field-hint" style="margin-top:12px">Interpretación orientativa: |γ₁| ≤ 0.5 aproximadamente simétrica; exceso de curtosis entre −0.5 y 0.5 aproximadamente mesocúrtica. Estos umbrales son descriptivos, no universales.</p>
+    </section>
+    <aside class="formula-sheet" aria-label="Fórmulas de momentos, asimetría y curtosis">
+      <h3>Fórmulas utilizadas</h3>
+      <ul class="formula-list">
+        <li><strong>Momento central descriptivo de orden k</strong><code>mₖ = <span class="formula-frac"><span>Σᵢ (xᵢ − <span class="mean-symbol">μ</span>)ᵏ</span><span class="count-symbol">N</span></span>, k = 1, 2, 3, 4</code></li>
+        <li><strong>Primer y segundo momentos</strong><code>m₁ = 0; m₂ = <span class="formula-frac"><span>Σᵢ (xᵢ − <span class="mean-symbol">μ</span>)²</span><span class="count-symbol">N</span></span></code></li>
+        <li><strong>Asimetría de Fisher</strong><code>γ₁ = <span class="formula-frac"><span>m₃</span><span>m₂³ᐟ²</span></span></code></li>
+        <li><strong>Exceso de curtosis</strong><code>γ₂ = <span class="formula-frac"><span>m₄</span><span>m₂²</span></span> − 3</code></li>
+      </ul>
+      <p class="formula-note">Asimetría y curtosis no se definen cuando m₂ = 0; γ₂ es el exceso, no la curtosis de Pearson β₂. Son coeficientes descriptivos sin corrección muestral de sesgo.</p>
+    </aside>
+          </div>
+        </section>
+
+        <!-- Página 8: gráficos interactivos de frecuencias, caja y proporciones. -->
+        <section class="notebook-page" id="page-8" aria-labelledby="charts-title">
+          <div class="page-content-wrapper">
+            <div class="page-header-banner"><span class="unit-label">Unidad V · Representación gráfica</span><span class="page-number-tag">Página 8 de 8</span></div>
+    <section class="section-card" id="graficos" aria-labelledby="charts-title">
+      <div class="section-heading"><div class="heading-group"><span class="module-number coral">08</span><div><h2 id="charts-title">Representación gráfica</h2><p>Frecuencias absolutas, acumuladas y proporciones de la distribución.</p></div></div><span class="section-tag">Chart.js · interactivo</span></div>
+      <div class="chart-grid">
+        <article class="chart-panel wide"><h3 class="chart-title">Frecuencia absoluta por intervalo o valor</h3><div class="chart-canvas"><canvas id="frequencyChart" aria-label="Gráfico de frecuencias absolutas" role="img"></canvas></div><p class="chart-note" id="frequencyChartNote">Barras contiguas para intervalos agrupados; separadas para datos discretos.</p></article>
+        <article class="chart-panel"><h3 class="chart-title">Diagrama de caja y bigotes · cuartiles</h3><div class="chart-canvas"><canvas id="boxPlotChart" aria-label="Diagrama de caja y bigotes con cuartiles y posibles atípicos" role="img"></canvas></div><p class="chart-note" id="boxPlotNote">La caja va de Q₁ a Q₃; la línea marca Q₂ (mediana), los bigotes llegan al último valor dentro de 1.5 RIC y los puntos señalan posibles atípicos.</p></article>
+        <article class="chart-panel"><h3 class="chart-title">Distribución porcentual</h3><div class="chart-canvas"><canvas id="shareChart" aria-label="Gráfico circular de proporciones" role="img"></canvas></div><p class="chart-note">Cada sector representa la proporción de una clase o categoría sobre N.</p></article>
+      </div>
+      <div class="notice info visible" id="chartNotice" role="status">Los gráficos se muestran cuando Chart.js está disponible. Se requiere conexión para cargar la librería CDN.</div>
+    </section>
+    <aside class="formula-sheet" aria-label="Fórmulas representadas en los gráficos">
+      <h3>Fórmulas representadas</h3>
+      <ul class="formula-list">
+        <li><strong>Histograma y barras</strong><code>Alturaᵢ = fᵢ</code></li>
+        <li><strong>Caja y bigotes</strong><code>Q₁, Q₂, Q₃; bigotes dentro de [Q₁ − 1.5 RIC, Q₃ + 1.5 RIC]</code></li>
+        <li><strong>Posibles atípicos</strong><code>xᵢ &lt; LI o xᵢ &gt; LS</code></li>
+        <li><strong>Gráfico de sectores</strong><code>Porcentajeᵢ = <span class="formula-frac"><span>fᵢ</span><span class="count-symbol">N</span></span> × 100%; ánguloᵢ = hᵢ × 360°</code></li>
+      </ul>
+    </aside>
+            <div class="page-bottom-note"><span>Estadística descriptiva · UTP</span><span id="footerSummary">Los datos permanecen en este navegador y no se envían a un servidor.</span></div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Navegación entre la cubierta y las ocho páginas temáticas. -->
+    <footer class="bottom-control-bar">
+      <div class="nav-buttons-cluster">
+        <button class="nav-btn" id="btnHome" type="button" title="Ir a la portada">Inicio</button>
+        <button class="nav-btn" id="btnPrev" type="button" title="Página anterior" disabled><span aria-hidden="true">←</span><span class="wide-label"> Anterior</span></button>
+        <select class="page-indicator-select" id="pageSelector" aria-label="Seleccionar página del cuaderno"><option value="0">Cubierta</option></select>
+        <span class="page-position" id="pagePosition">Cubierta</span>
+        <button class="nav-btn primary" id="btnNext" type="button" title="Abrir cuaderno">Abrir <span aria-hidden="true">→</span></button>
+        <button class="nav-btn" id="btnEnd" type="button" title="Ir a la última página">Final</button>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    "use strict";
+
+    // Datos de demostración, paleta de gráficos y estado compartido de la aplicación.
+    const SAMPLE_DATA = [118.4, 121.2, 123.7, 125.1, 127.8, 128.5, 129.3, 130.6, 131.1, 132.4, 133.2, 134.8, 135.5, 136.1, 137.9, 138.3, 139.7, 140.2, 141.5, 142.6, 143.1, 144.9, 146.2, 147.4, 149.1, 151.7, 154.3, 158.6, 225.8];
+    const CHART_COLORS = ["#163b38", "#d66b4d", "#c99a3e", "#5878a2", "#4f8f78", "#90a96f", "#d08e72", "#7395a9", "#b89757", "#7d9c91", "#a66a5b", "#7e83a1"];
+    const DISPLAY_LIMIT = 500;
+    let population = [];
+    let currentSource = "";
+    let chartInstances = {};
+    let lastChartState = null;
+    let importedTable = null;
+    let importedFileName = "";
+
+    const $ = (id) => document.getElementById(id);
+    const numberFormat = new Intl.NumberFormat("es-PA", { maximumSignificantDigits: 7 });
+    const formatNumber = (value) => {
+      if (!Number.isFinite(value)) return "No definido";
+      if (Object.is(value, -0) || Math.abs(value) < 1e-14) value = 0;
+      return numberFormat.format(value);
+    };
+    const formatPercent = (value) => `${numberFormat.format(value * 100)}%`;
+    // Escapa texto antes de insertarlo como HTML para evitar interpretar contenido importado como marcado.
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[character]);
+
+    // Muestra mensajes de estado al usuario con una clase visual según el tipo.
+    function showNotice(message, type = "info") {
+      const notice = $("dataNotice");
+      notice.textContent = message;
+      notice.className = `notice visible ${type}`;
+    }
+
+    // Convierte un token numérico finito; devuelve null si no tiene formato admitido.
+    function parseNumericToken(token) {
+      const normalized = String(token).trim();
+      if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(normalized)) return null;
+      const value = Number(normalized);
+      return Number.isFinite(value) ? value : null;
+    }
+
+    // Separa la entrada manual y conserva los tokens inválidos para informar al usuario.
+    function parseManualInput() {
+      const rawTokens = $("dataInput").value.trim().split(/[\s,;]+/).filter(Boolean);
+      const values = [];
+      const invalid = [];
+      for (const token of rawTokens) {
+        const value = parseNumericToken(token);
+        if (value === null) invalid.push(token);
+        else values.push(value);
+      }
+      return { values, invalid };
+    }
+
+    // Sugiere discreta para enteros y continua para valores con decimales.
+    function inferVariableType(values) {
+      return values.every((value) => Number.isInteger(value)) ? "discrete" : "continuous";
+    }
+
+    // Usa la selección explícita o la sugerencia automática de tipo.
+    function selectedVariableType(values) {
+      const selected = $("variableType").value;
+      return selected === "auto" ? inferVariableType(values) : selected;
+    }
+
+    // Limita la longitud visible de las listas sin alterar los datos analizados.
+    function renderList(values) {
+      const visible = values.slice(0, DISPLAY_LIMIT).map(formatNumber);
+      const remaining = values.length - visible.length;
+      return `${visible.join(", ")}${remaining > 0 ? ` … (${remaining} valores adicionales)` : ""}`;
+    }
+
+    // Calcula cuantiles con posición (N - 1)p e interpolación lineal entre vecinos.
+    function quantile(sortedValues, probability) {
+      const position = (sortedValues.length - 1) * probability;
+      const lowerIndex = Math.floor(position);
+      const upperIndex = Math.ceil(position);
+      const fraction = position - lowerIndex;
+      return sortedValues[lowerIndex] + (sortedValues[upperIndex] - sortedValues[lowerIndex]) * fraction;
+    }
+
+    // Cuenta valores exactos o agrupa las observaciones en clases según Sturges.
+    function buildFrequencyTable(values, grouped) {
+      const n = values.length;
+      const minimum = values[0];
+      const maximum = values[n - 1];
+      const range = maximum - minimum;
+      if (!grouped) {
+        const counts = new Map();
+        for (const value of values) counts.set(value, (counts.get(value) || 0) + 1);
+        return [...counts.entries()].sort((a, b) => a[0] - b[0]).map(([value, fi]) => ({
+          label: formatNumber(value), midpoint: value, lower: value, upper: value, fi
+        }));
+      }
+
+      const classCount = range === 0 ? 1 : Math.max(1, Math.round(1 + 3.322 * Math.log10(n)));
+      const width = range === 0 ? 0 : range / classCount;
+      const rows = Array.from({ length: classCount }, (_, index) => {
+        const lower = range === 0 ? minimum : minimum + index * width;
+        const upper = range === 0 ? maximum : (index === classCount - 1 ? maximum : minimum + (index + 1) * width);
+        return { label: "", midpoint: range === 0 ? minimum : (lower + upper) / 2, lower, upper, fi: 0 };
+      });
+      for (const value of values) {
+        const index = range === 0 ? 0 : Math.min(classCount - 1, Math.floor((value - minimum) / width));
+        rows[index].fi += 1;
+      }
+      rows.forEach((row, index) => {
+        const left = formatNumber(row.lower);
+        const right = formatNumber(row.upper);
+        row.label = `[${left}, ${right}${index === rows.length - 1 ? "]" : ")"}`;
+      });
+      return rows;
+    }
+
+    // Calcula los resúmenes estadísticos a partir de los datos ordenados.
+    // Los momentos siempre son descriptivos poblacionales; varianza y desviación
+    // cambian de divisor cuando el usuario declara que los datos son una muestra.
+    function getAnalysis(values, scope = "population") {
+      const sorted = [...values].sort((a, b) => a - b);
+      const n = sorted.length;
+      const mean = sorted.reduce((sum, value) => sum + value / n, 0);
+      const minimum = sorted[0];
+      const maximum = sorted[n - 1];
+      const range = maximum - minimum;
+      const q1 = quantile(sorted, 0.25);
+      const median = quantile(sorted, 0.5);
+      const q3 = quantile(sorted, 0.75);
+      const iqr = q3 - q1;
+      let squaredSum = 0;
+      let cubedSum = 0;
+      let fourthSum = 0;
+      for (const value of sorted) {
+        const deviation = value - mean;
+        const square = deviation * deviation;
+        squaredSum += square;
+        cubedSum += square * deviation;
+        fourthSum += square * square;
+      }
+      const momentVariance = squaredSum / n;
+      const variance = scope === "sample" ? (n > 1 ? squaredSum / (n - 1) : null) : momentVariance;
+      const sigma = variance === null ? null : Math.sqrt(variance);
+      const momentSigma = Math.sqrt(momentVariance);
+      const mu3 = cubedSum / n;
+      const mu4 = fourthSum / n;
+      const skewness = momentSigma === 0 ? null : mu3 / (momentSigma * momentSigma * momentSigma);
+      const excessKurtosis = momentSigma === 0 ? null : mu4 / (momentVariance * momentVariance) - 3;
+      const frequencies = new Map();
+      for (const value of sorted) frequencies.set(value, (frequencies.get(value) || 0) + 1);
+      const maxFrequency = Math.max(...frequencies.values());
+      const modes = maxFrequency === 1 ? [] : [...frequencies.entries()].filter((entry) => entry[1] === maxFrequency).map((entry) => entry[0]);
+      const lowerFence = q1 - 1.5 * iqr;
+      const upperFence = q3 + 1.5 * iqr;
+      const outliers = sorted.filter((value) => value < lowerFence || value > upperFence);
+      const lowerWhisker = sorted.find((value) => value >= lowerFence) ?? minimum;
+      let upperWhisker = maximum;
+      for (let index = sorted.length - 1; index >= 0; index -= 1) {
+        if (sorted[index] <= upperFence) {
+          upperWhisker = sorted[index];
+          break;
+        }
+      }
+      const scale = Math.max(1, Math.abs(minimum), Math.abs(maximum));
+      const cv = sigma === null || Math.abs(mean) <= 1e-12 * scale ? null : (sigma / Math.abs(mean)) * 100;
+      return { sorted, n, mean, median, modes, maxFrequency, minimum, maximum, range, q1, q3, iqr, variance, sigma, momentVariance, momentSigma, mu3, mu4, skewness, excessKurtosis, lowerFence, upperFence, lowerWhisker, upperWhisker, outliers, cv };
+    }
+
+    // Renderiza frecuencias absolutas, relativas y acumuladas, incluida la fila total.
+    function populateFrequencyTable(rows, n) {
+      let cumulative = 0;
+      const body = rows.map((row) => {
+        cumulative += row.fi;
+        const hi = row.fi / n;
+        const Hi = cumulative / n;
+        return `<tr><td>${escapeHtml(row.label)}</td><td>${formatNumber(row.midpoint)}</td><td>${row.fi}</td><td>${formatNumber(hi)}</td><td>${formatNumber(hi * 100)}%</td><td>${cumulative}</td><td>${formatNumber(Hi)}</td><td>${formatNumber(Hi * 100)}%</td></tr>`;
+      }).join("");
+      $("frequencyBody").innerHTML = body;
+      $("frequencyFoot").innerHTML = `<tr class="table-total"><td>Total</td><td>—</td><td>${n}</td><td>1</td><td>100%</td><td>${n}</td><td>1</td><td>100%</td></tr>`;
+    }
+
+    // Actualiza texto simple por id y construye una etiqueta interpretativa segura.
+    function setText(id, value) { $(id).textContent = value; }
+
+    function setFlag(id, label, kind = "") {
+      $(id).innerHTML = `<span class="flag ${kind}">${escapeHtml(label)}</span>`;
+    }
+
+    // Clasifica orientativamente forma y curtosis; no sustituye la lectura de gráficos.
+    function classifyShape(skewness, excessKurtosis, sigma) {
+      if (sigma === 0) return { skewLabel: "No definida", skewKind: "warn", skewText: "La asimetría no está definida porque todos los valores son iguales.", kurtLabel: "No definida", kurtKind: "warn", kurtText: "La curtosis no está definida cuando la dispersión descriptiva es cero." };
+      const absoluteSkew = Math.abs(skewness);
+      let skewLabel;
+      let skewText;
+      let skewKind = "";
+      if (absoluteSkew <= 0.5) {
+        skewLabel = "Aproximadamente simétrica";
+        skewText = "El coeficiente está cerca de cero; contrasta la simetría con el histograma y los cuantiles.";
+      } else if (skewness > 0) {
+        skewLabel = "Asimetría positiva / derecha";
+        skewText = "La cola derecha tiene mayor influencia en el tercer momento; revisa los valores altos y el histograma.";
+        skewKind = "warn";
+      } else {
+        skewLabel = "Asimetría negativa / izquierda";
+        skewText = "La cola izquierda tiene mayor influencia en el tercer momento; revisa los valores bajos y el histograma.";
+        skewKind = "warn";
+      }
+      let kurtLabel;
+      let kurtText;
+      let kurtKind = "";
+      if (excessKurtosis > 0.5) {
+        kurtLabel = "Leptocúrtica";
+        kurtText = "El exceso positivo señala más peso relativo en desviaciones alejadas según m₄; no equivale a contar atípicos.";
+        kurtKind = "warn";
+      } else if (excessKurtosis < -0.5) {
+        kurtLabel = "Platicúrtica";
+        kurtText = "El exceso negativo indica menor peso relativo en desviaciones alejadas que la referencia normal, según esta medida.";
+        kurtKind = "warn";
+      } else {
+        kurtLabel = "Mesocúrtica";
+        kurtText = "El exceso está cerca de cero, referencia de la distribución normal; no implica que los datos sean normales.";
+      }
+      return { skewLabel, skewKind, skewText, kurtLabel, kurtKind, kurtText };
+    }
+
+    // Libera instancias anteriores antes de redibujar para evitar duplicados.
+    function destroyCharts() {
+      for (const chart of Object.values(chartInstances)) chart.destroy();
+      chartInstances = {};
+    }
+
+    // Dibuja frecuencias, caja y bigotes, y proporciones con Chart.js.
+    function renderCharts(rows, grouped, analysis) {
+      if (typeof Chart === "undefined") {
+        $("chartNotice").textContent = "Chart.js no pudo cargarse. Comprueba la conexión e inténtalo de nuevo.";
+        $("chartNotice").className = "notice visible warning";
+        return;
+      }
+      $("chartNotice").className = "notice";
+      destroyCharts();
+      const labels = rows.map((row) => row.label);
+      const frequencies = rows.map((row) => row.fi);
+      const { minimum, maximum, q1, median, q3, lowerWhisker, upperWhisker, outliers } = analysis;
+      const commonLegend = { labels: { color: "#435a62", boxWidth: 11, usePointStyle: true, font: { family: "Atkinson Hyperlegible", size: 13 } } };
+      const commonTooltip = { backgroundColor: "#183431", titleFont: { family: "Atkinson Hyperlegible", size: 14 }, bodyFont: { family: "Atkinson Hyperlegible", size: 13 }, padding: 10, cornerRadius: 4 };
+      const boxPlotPlugin = {
+        id: "populationBoxPlot",
+        afterDatasetsDraw(chart) {
+          const { ctx, chartArea, scales: { x } } = chart;
+          if (!chartArea || !x) return;
+          const centerY = (chartArea.top + chartArea.bottom) / 2;
+          const halfHeight = Math.min(28, Math.max(18, chartArea.height * 0.2));
+          const capHeight = halfHeight * 0.55;
+          const pixel = (value) => x.getPixelForValue(value);
+          const q1Pixel = pixel(q1);
+          const medianPixel = pixel(median);
+          const q3Pixel = pixel(q3);
+          ctx.save();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = "#163b38";
+          ctx.beginPath();
+          ctx.moveTo(pixel(lowerWhisker), centerY);
+          ctx.lineTo(q1Pixel, centerY);
+          ctx.moveTo(q3Pixel, centerY);
+          ctx.lineTo(pixel(upperWhisker), centerY);
+          ctx.moveTo(pixel(lowerWhisker), centerY - capHeight);
+          ctx.lineTo(pixel(lowerWhisker), centerY + capHeight);
+          ctx.moveTo(pixel(upperWhisker), centerY - capHeight);
+          ctx.lineTo(pixel(upperWhisker), centerY + capHeight);
+          ctx.stroke();
+          ctx.fillStyle = "rgba(79, 143, 120, 0.25)";
+          ctx.fillRect(q1Pixel, centerY - halfHeight, Math.max(2, q3Pixel - q1Pixel), halfHeight * 2);
+          ctx.strokeRect(q1Pixel, centerY - halfHeight, Math.max(2, q3Pixel - q1Pixel), halfHeight * 2);
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(medianPixel, centerY - halfHeight);
+          ctx.lineTo(medianPixel, centerY + halfHeight);
+          ctx.stroke();
+          ctx.restore();
+        }
+      };
+
+      chartInstances.frequency = new Chart($("frequencyChart"), {
+        type: "bar",
+        data: { labels, datasets: [{ label: "Frecuencia absoluta (fᵢ)", data: frequencies, backgroundColor: labels.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]), borderRadius: grouped ? 1 : 4, borderSkipped: false, categoryPercentage: grouped ? 1 : 0.78, barPercentage: grouped ? 0.98 : 0.82 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: commonTooltip }, scales: { x: { grid: { display: false }, ticks: { color: "#63756e", maxRotation: 45, minRotation: 0, font: { size: 9 } }, title: { display: true, text: grouped ? "Intervalo de clase" : "Valor observado", color: "#63756e", font: { size: 10 } } }, y: { beginAtZero: true, ticks: { precision: 0, color: "#63756e" }, grid: { color: "#e8eee8" }, title: { display: true, text: "Frecuencia absoluta", color: "#63756e", font: { size: 10 } } } } }
+      });
+      const axisPadding = Math.max((maximum - minimum) * 0.08, Math.max(Math.abs(minimum), Math.abs(maximum), 1) * 0.02);
+      const outlierPoints = outliers.map((value, index) => ({ x: value, y: ((index % 7) - 3) * 0.035 }));
+      chartInstances.boxplot = new Chart($("boxPlotChart"), {
+        type: "scatter",
+        data: { datasets: [{ label: "Posibles atípicos", data: outlierPoints, pointRadius: 5, pointHoverRadius: 7, pointBackgroundColor: "#b54837", pointBorderColor: "#fff", pointBorderWidth: 1.5 }] },
+        plugins: [boxPlotPlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { ...commonTooltip, callbacks: { label: (context) => `Posible atípico: ${formatNumber(context.parsed.x)}` } }
+          },
+          scales: {
+            x: { type: "linear", min: minimum - axisPadding, max: maximum + axisPadding, grid: { color: "#e8eee8" }, ticks: { color: "#435a62", maxTicksLimit: 7 }, title: { display: true, text: "Valor observado", color: "#435a62" } },
+            y: { display: false, min: -0.5, max: 0.5 }
+          }
+        }
+      });
+      chartInstances.share = new Chart($("shareChart"), {
+        type: "doughnut",
+        data: { labels, datasets: [{ label: "Frecuencia relativa", data: frequencies, backgroundColor: labels.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]), borderColor: "#fff", borderWidth: 2, hoverOffset: 7 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: "42%", plugins: { legend: { position: "bottom", labels: { color: "#435a62", boxWidth: 11, padding: 10, usePointStyle: true, font: { family: "Atkinson Hyperlegible", size: 13 } } }, tooltip: { ...commonTooltip, callbacks: { label: (context) => ` ${context.label}: ${formatNumber(context.raw / population.length * 100)}% (${context.raw})` } } } }
+      });
+      Object.values(chartInstances).forEach((chart) => {
+        if (chart.options.scales) {
+          Object.values(chart.options.scales).forEach((scale) => {
+            if (scale.ticks) scale.ticks.font = { family: "Atkinson Hyperlegible", size: 13 };
+            if (scale.title) scale.title.font = { family: "Atkinson Hyperlegible", size: 13 };
+          });
+        }
+        const legend = chart.options.plugins.legend;
+        if (legend?.labels) legend.labels.font = { family: "Atkinson Hyperlegible", size: 13 };
+        chart.update("none");
+      });
+    }
+
+          // Sincroniza símbolos, textos y fórmula de varianza con población o muestra.
+          function updateScopeDisplay() {
+            const isSample = $("dataScope").value === "sample";
+            const countSymbol = isSample ? "n" : "N";
+            const meanSymbol = isSample ? "x̄" : "μ";
+            const sdSymbol = isSample ? "s" : "σ";
+            document.querySelectorAll(".count-symbol").forEach((element) => { element.textContent = countSymbol; });
+            document.querySelectorAll(".mean-symbol").forEach((element) => { element.textContent = meanSymbol; });
+            document.querySelectorAll(".sd-symbol").forEach((element) => { element.textContent = sdSymbol; });
+            document.querySelectorAll(".variance-divisor").forEach((element) => { element.innerHTML = `<span>1</span><span>${isSample ? "n − 1" : "N"}</span>`; });
+            $("populationFormula").classList.toggle("active", !isSample);
+            $("sampleFormula").classList.toggle("active", isSample);
+            setText("scopeHint", isSample ? "Muestra: varianza con divisor n − 1." : "Población completa: varianza con divisor N.");
+            setText("countMetricLabel", `${isSample ? "Muestra" : "Población"} válida · ${countSymbol}`);
+            setText("meanMetricLabel", `Media ${isSample ? "muestral" : "poblacional"} · ${meanSymbol}`);
+            setText("meanResultLabel", `Media ${isSample ? "muestral" : "poblacional"} · ${meanSymbol}`);
+            setText("sigmaMetricLabel", `Desviación ${isSample ? "muestral" : "poblacional"} · ${sdSymbol}`);
+            setText("varianceResultLabel", `Varianza ${isSample ? "muestral" : "poblacional"} · ${sdSymbol}²`);
+            setText("sigmaResultLabel", `Desviación estándar ${isSample ? "muestral" : "poblacional"} · ${sdSymbol}`);
+          }
+
+          // Coordina los cálculos y actualiza todas las páginas con el análisis actual.
+          function renderAnalysis(sourceMessage = "") {
+      if (!population.length) return;
+      updateScopeDisplay();
+      const isSample = $("dataScope").value === "sample";
+      const countSymbol = isSample ? "n" : "N";
+      const meanSymbol = isSample ? "x̄" : "μ";
+      const sdSymbol = isSample ? "s" : "σ";
+      const analysis = getAnalysis(population, isSample ? "sample" : "population");
+      const { sorted, n, mean, median, modes, maxFrequency, minimum, maximum, range, q1, q3, iqr, variance, sigma, momentVariance, momentSigma, mu3, mu4, skewness, excessKurtosis, lowerFence, upperFence, outliers, cv } = analysis;
+      const variableType = selectedVariableType(population);
+      const mode = $("groupingMode").value;
+      const uniqueCount = new Set(population).size;
+      const grouped = mode === "grouped" || (mode === "auto" && uniqueCount > 14);
+      const rows = buildFrequencyTable(sorted, grouped);
+      const shape = classifyShape(skewness, excessKurtosis, momentSigma);
+      setText("boxPlotNote", `Q₁ = ${formatNumber(q1)} · Q₂ (mediana) = ${formatNumber(median)} · Q₃ = ${formatNumber(q3)} · RIC = ${formatNumber(iqr)}. Bigotes hasta valores dentro de 1.5 RIC; puntos = posibles atípicos.`);
+
+      setText("metricN", numberFormat.format(n));
+      setText("metricNDetail", `${uniqueCount} valor${uniqueCount === 1 ? " distinto" : "es distintos"} · ${isSample ? "conjunto muestral" : "conjunto poblacional"}`);
+      setText("metricType", variableType === "discrete" ? "Discreta" : "Continua");
+      setText("metricTypeDetail", $("variableType").value === "auto" ? "Inferida por los valores; editable" : "Tipo seleccionado por el usuario");
+      setText("metricMean", formatNumber(mean));
+      $("metricMeanDetail").innerHTML = `${meanSymbol} = <span class="formula-frac"><span>Σxᵢ</span><span>${countSymbol}</span></span>`;
+      setText("metricSigma", sigma === null ? "No definido" : formatNumber(sigma));
+      setText("metricSigmaDetail", `${sdSymbol}² = ${variance === null ? "requiere n ≥ 2" : formatNumber(variance)}`);
+
+      $("ascendingData").textContent = renderList(sorted);
+      $("descendingData").textContent = renderList([...sorted].reverse());
+      populateFrequencyTable(rows, n);
+      setText("frequencyModeTag", grouped ? "Agrupada · Sturges" : "Sin agrupar · valores únicos");
+      $("frequencyNote").innerHTML = grouped
+        ? `k = 1 + 3.322 log₁₀(${n}) ≈ ${1 + 3.322 * Math.log10(n)}; se usan ${rows.length} clases. La amplitud es ${range === 0 ? "0 (un solo valor)" : formatNumber(range / rows.length)}. En clases agrupadas, las marcas de clase permiten resúmenes aproximados.`
+        : `Se muestran ${rows.length} valores distintos. hᵢ = <span class="formula-frac"><span>fᵢ</span><span>${countSymbol}</span></span>; las frecuencias relativas y acumuladas suman 1 (100%).`;
+
+      setText("meanValue", formatNumber(mean));
+      setText("medianValue", formatNumber(median));
+      setText("modeValue", modes.length ? modes.map(formatNumber).join(", ") : "Sin moda (todas las frecuencias son 1)");
+      setText("modeType", modes.length === 0 ? "Amodal" : modes.length === 1 ? "Unimodal" : "Multimodal");
+      setText("centralInterpretation", modes.length > 1 ? `El conjunto es multimodal: ${modes.length} valores comparten la frecuencia máxima (${maxFrequency}).` : modes.length === 1 ? `La moda ${formatNumber(modes[0])} aparece ${maxFrequency} veces. Contrasta el centro con la mediana ante asimetría.` : "Amodal: ningún valor se repite; la mediana resume el centro sin depender de repeticiones.");
+
+      setText("q1Value", formatNumber(q1));
+      setText("q2Value", formatNumber(median));
+      setText("q3Value", formatNumber(q3));
+      setText("iqrValue", formatNumber(iqr));
+      setText("positionInterpretation", `Aproximadamente 25% de los valores queda en o bajo Q₁ (${formatNumber(q1)}), 50% en o bajo Q₂ y 75% en o bajo Q₃ (${formatNumber(q3)}). El 50% central abarca ${formatNumber(iqr)} unidades.`);
+
+      setText("minValue", formatNumber(minimum));
+      setText("maxValue", formatNumber(maximum));
+      setText("rangeValue", formatNumber(range));
+      setText("varianceValue", variance === null ? "No definido (n < 2)" : formatNumber(variance));
+      setText("sigmaValue", sigma === null ? "No definido (n < 2)" : formatNumber(sigma));
+      setText("cvValue", cv === null ? (sigma === null ? "No definido (n < 2)" : `No definido (${meanSymbol} ≈ 0)`) : `${formatNumber(cv)}%`);
+      setText("dispersionInterpretation", sigma === null
+        ? "La varianza muestral requiere al menos dos observaciones; agrega datos para calcular s² y s."
+        : cv === null
+          ? `El coeficiente de variación no se informa porque ${meanSymbol} es cero o cercano a cero respecto a la escala de los datos.`
+          : `La desviación estándar ${sdSymbol} equivale al ${formatNumber(cv)}% de |${meanSymbol}|. El CV solo es interpretable en escalas de razón y su valoración depende del contexto.`);
+
+      setText("lowerFence", formatNumber(lowerFence));
+      setText("upperFence", formatNumber(upperFence));
+      setText("outlierCount", `${outliers.length}`);
+      setText("outlierValues", outliers.length ? renderList(outliers) : "Ninguno");
+      $("outlierFlags").innerHTML = outliers.length
+        ? `<span class="flag alert">${outliers.length} posible${outliers.length === 1 ? "" : "s"} atípico${outliers.length === 1 ? "" : "s"}</span><span class="flag warn">Revisar contexto y captura</span>`
+        : `<span class="flag">No se detectaron observaciones fuera de los límites</span>`;
+
+      setText("mu1Value", "0 (teórico)");
+      setText("mu2Value", formatNumber(momentVariance));
+      setText("mu3Value", formatNumber(mu3));
+      setText("mu4Value", formatNumber(mu4));
+      setText("skewValue", skewness === null ? "No definida" : formatNumber(skewness));
+      setFlag("skewFlag", shape.skewLabel, shape.skewKind);
+      setText("skewInterpretation", shape.skewText);
+      setText("kurtosisValue", excessKurtosis === null ? "No definida" : formatNumber(excessKurtosis));
+      setFlag("kurtosisFlag", shape.kurtLabel, shape.kurtKind);
+      setText("kurtosisInterpretation", shape.kurtText);
+      setText("frequencyChartNote", grouped ? "Intervalos calculados con Sturges; barras contiguas representan clases cuantitativas." : "Valores observados distintos; barras separadas representan frecuencias discretas.");
+      setText("footerSummary", `${countSymbol} = ${n} · Varianza: divisor ${isSample ? "n − 1" : "N"} · Momentos descriptivos: divisor ${countSymbol}`);
+      lastChartState = { rows, grouped, analysis };
+      if ($("page-8").classList.contains("active")) renderCharts(rows, grouped, analysis);
+      if (sourceMessage) showNotice(sourceMessage, "success");
+    }
+
+    // Valida el conjunto antes de guardarlo como estado y recalcular los resultados.
+    function loadValues(values, source, invalidCount = 0) {
+      if (!values.length) {
+        showNotice("No hay observaciones numéricas válidas. Revisa el contenido y vuelve a intentarlo.", "error");
+        return false;
+      }
+      if (values.length > 50000) {
+        showNotice("El límite de esta aplicación es 50 000 observaciones por análisis.", "error");
+        return false;
+      }
+      const minimum = Math.min(...values);
+      const maximum = Math.max(...values);
+      if (!Number.isFinite(maximum - minimum)) {
+        showNotice("El rango excede la precisión numérica disponible. Revisa la escala o las observaciones.", "error");
+        return false;
+      }
+      population = values;
+      currentSource = source;
+      $("dataInput").value = values.join(", ");
+      if ($("variableType").value === "auto") {
+        $("variableType").value = "auto";
+      }
+      const detail = invalidCount > 0
+        ? `${source}: ${values.length} valores válidos; ${invalidCount} celda(s) no numérica(s) omitida(s). Revisa la columna antes de interpretar.`
+        : `${source}: ${values.length} observaciones numéricas cargadas.`;
+      renderAnalysis();
+      showNotice(detail, invalidCount > 0 ? "warning" : "success");
+      return true;
+    }
+
+    // Procesa el área de texto y avisa si hubo entradas que no eran numéricas.
+    function analyzeManualInput() {
+      const { values, invalid } = parseManualInput();
+      if (!values.length) {
+        showNotice("Escribe al menos una observación numérica. Se aceptan valores separados por coma, espacio, punto y coma o salto de línea.", "error");
+        return;
+      }
+      loadValues(values, "Ingreso manual", invalid.length);
+      if (invalid.length) {
+        const sampleInvalid = invalid.slice(0, 5).join(", ");
+        showNotice(`Se cargaron ${values.length} valores; se omitieron ${invalid.length} token(s) no numérico(s): ${sampleInvalid}${invalid.length > 5 ? "…" : ""}. Corrige la entrada si no fue intencional.`, "warning");
+      }
+    }
+
+    // Divide una fila CSV respetando separadores dentro de celdas entre comillas.
+    function splitDelimitedLine(line, delimiter) {
+      const cells = [];
+      let cell = "";
+      let quoted = false;
+      for (let index = 0; index < line.length; index += 1) {
+        const character = line[index];
+        if (character === '"') {
+          if (quoted && line[index + 1] === '"') { cell += '"'; index += 1; }
+          else quoted = !quoted;
+        } else if (character === delimiter && !quoted) {
+          cells.push(cell.trim());
+          cell = "";
+        } else {
+          cell += character;
+        }
+      }
+      cells.push(cell.trim());
+      return cells;
+    }
+
+    // Detecta separador, encabezados y formato decimal para preparar CSV o TXT.
+    function parseFileText(text) {
+      const cleanText = text.replace(/^\uFEFF/, "");
+      const lines = cleanText.split(/\r?\n/).filter((line) => line.trim().length > 0);
+      if (!lines.length) throw new Error("El archivo está vacío.");
+      const first = lines[0];
+      const counts = [[";", (first.match(/;/g) || []).length], ["\t", (first.match(/\t/g) || []).length], [",", (first.match(/,/g) || []).length]];
+      counts.sort((a, b) => b[1] - a[1]);
+      const delimiter = counts[0][1] > 0 ? counts[0][0] : null;
+      const rows = lines.map((line) => delimiter ? splitDelimitedLine(line, delimiter) : line.trim().split(/\s+/));
+      const oneRowFlat = rows.length === 1 && rows[0].length > 1 && rows[0].every((cell) => parseNumericToken(cell) !== null);
+      if (oneRowFlat) return { headers: ["Datos"], rows: rows[0].map((cell) => [cell]), delimiter: null, decimalComma: false };
+      const firstNonEmptyRow = rows.find((row) => row.some((cell) => cell.trim() !== "")) || [];
+      const hasHeader = firstNonEmptyRow.some((cell) => cell.trim() !== "" && parseNumericToken(cell) === null);
+      const headers = hasHeader
+        ? firstNonEmptyRow.map((cell, index) => cell || `Columna ${index + 1}`)
+        : firstNonEmptyRow.map((_, index) => `Columna ${index + 1}`);
+      const dataRows = hasHeader ? rows.slice(1) : rows;
+      const decimalComma = delimiter === ";";
+      return { headers, rows: dataRows, delimiter, decimalComma };
+    }
+
+    // Interpreta una celda importada y distingue vacíos de valores inválidos.
+    function parseImportedNumber(cell, decimalComma) {
+      const value = String(cell).trim();
+      if (!value) return { blank: true, value: null };
+      const normalized = decimalComma ? value.replace(/\./g, "").replace(",", ".") : value;
+      return { blank: false, value: parseNumericToken(normalized) };
+    }
+
+    // Lee el archivo local y permite elegir qué columna numérica analizar.
+    async function prepareFile() {
+      const file = $("fileInput").files[0];
+      if (!file) {
+        showNotice("Selecciona primero un archivo CSV o TXT.", "warning");
+        return;
+      }
+      try {
+        const text = await file.text();
+        importedTable = parseFileText(text);
+        importedFileName = file.name;
+        const select = $("columnSelect");
+        select.innerHTML = "";
+        importedTable.headers.forEach((header, index) => {
+          const option = document.createElement("option");
+          option.value = String(index);
+          option.textContent = header;
+          select.append(option);
+        });
+        const numericScores = importedTable.headers.map((_, columnIndex) => {
+          let numeric = 0;
+          let nonempty = 0;
+          for (const row of importedTable.rows) {
+            const cell = row[columnIndex] ?? "";
+            const parsed = parseImportedNumber(cell, importedTable.decimalComma);
+            if (!parsed.blank) { nonempty += 1; if (parsed.value !== null) numeric += 1; }
+          }
+          return nonempty ? numeric / nonempty : 0;
+        });
+        const bestColumn = numericScores.indexOf(Math.max(...numericScores));
+        if (bestColumn >= 0 && numericScores[bestColumn] > 0) select.value = String(bestColumn);
+        $("columnPicker").classList.add("visible");
+        showNotice(`Archivo leído: ${file.name}. Selecciona la columna numérica que deseas analizar.`, "info");
+      } catch (error) {
+        importedTable = null;
+        $("columnPicker").classList.remove("visible");
+        showNotice(`No se pudo leer el archivo: ${error.message}`, "error");
+      }
+    }
+
+    // Convierte la columna seleccionada y delega validación/cálculo a loadValues.
+    function importSelectedColumn() {
+      if (!importedTable) {
+        showNotice("Selecciona un archivo antes de cargar una columna.", "warning");
+        return;
+      }
+      const columnIndex = Number($("columnSelect").value);
+      const values = [];
+      let invalid = 0;
+      for (const row of importedTable.rows) {
+        const parsed = parseImportedNumber(row[columnIndex] ?? "", importedTable.decimalComma);
+        if (parsed.blank) continue;
+        if (parsed.value === null) invalid += 1;
+        else values.push(parsed.value);
+      }
+      loadValues(values, `Archivo ${importedFileName} · ${importedTable.headers[columnIndex]}`, invalid);
+    }
+
+    // Conecta controles de entrada, ejemplo, limpieza e importación con sus acciones.
+    $("analyzeButton").addEventListener("click", analyzeManualInput);
+    $("sampleButton").addEventListener("click", () => {
+      $("variableType").value = "auto";
+      $("groupingMode").value = "auto";
+      loadValues([...SAMPLE_DATA], "Datos de ejemplo · tiempos de respuesta (ms)");
+    });
+    // Limpia datos, resultados, indicadores y gráficos para iniciar otro análisis.
+    $("clearButton").addEventListener("click", () => {
+      population = [];
+      currentSource = "";
+      lastChartState = null;
+      $("dataInput").value = "";
+      $("metricN").textContent = "—";
+      $("metricNDetail").textContent = "Carga observaciones para comenzar";
+      for (const id of ["metricType", "metricMean", "metricSigma", "meanValue", "medianValue", "modeValue", "modeType", "q1Value", "q2Value", "q3Value", "iqrValue", "minValue", "maxValue", "rangeValue", "varianceValue", "sigmaValue", "cvValue", "lowerFence", "upperFence", "outlierCount", "outlierValues", "mu1Value", "mu2Value", "mu3Value", "mu4Value", "skewValue", "kurtosisValue"]) setText(id, "—");
+      $("ascendingData").textContent = "—";
+      $("descendingData").textContent = "—";
+      $("frequencyBody").innerHTML = '<tr><td colspan="8" style="text-align:center;color:#81908a">Carga datos para construir la tabla.</td></tr>';
+      $("frequencyFoot").innerHTML = "";
+      $("outlierFlags").innerHTML = '<span class="flag">Sin análisis</span>';
+      $("skewFlag").innerHTML = '<span class="flag">Sin análisis</span>';
+      $("kurtosisFlag").innerHTML = '<span class="flag">Sin análisis</span>';
+      setText("centralInterpretation", "La media usa todas las magnitudes; mediana y moda complementan la lectura del centro.");
+      setText("positionInterpretation", "La mitad central de los datos se encuentra entre Q₁ y Q₃.");
+      setText("dispersionInterpretation", "El CV compara la desviación con la magnitud de la media; no es útil si la media es cercana a cero.");
+      setText("skewInterpretation", "El signo de γ₁ orienta sobre la cola más influyente; contrástalo con el histograma.");
+      setText("kurtosisInterpretation", "La curtosis no es por sí sola un conteo de valores atípicos.");
+      destroyCharts();
+      showNotice("Datos limpiados. Ingresa una muestra o población, o carga el conjunto de ejemplo.", "info");
+      setText("footerSummary", "Los datos permanecen en este navegador y no se envían a un servidor.");
+    });
+    $("fileInput").addEventListener("change", prepareFile);
+    $("importButton").addEventListener("click", importSelectedColumn);
+    $("groupingMode").addEventListener("change", () => { if (population.length) renderAnalysis(); });
+    $("variableType").addEventListener("change", () => { if (population.length) renderAnalysis(); });
+    $("dataScope").addEventListener("change", () => {
+      updateScopeDisplay();
+      if (population.length) renderAnalysis();
+    });
+    updateScopeDisplay();
+
+    // Estado y nombres de las páginas usados por el sistema de navegación.
+    const notebookStage = $("notebookStage");
+    const coverPage = $("page-cover");
+    const contentPages = [...document.querySelectorAll(".notebook-page:not(.page-cover)")];
+    const pageLabels = [
+      "Ingreso y validación de datos",
+      "Tablas de frecuencia",
+      "Tendencia central",
+      "Medidas de posición",
+      "Medidas de dispersión",
+      "Detección de atípicos",
+      "Momentos estadísticos",
+      "Representación gráfica"
+    ];
+    let currentPage = 0;
+
+    // En pantallas grandes el cuaderno presenta las páginas como un pliego doble.
+    function isTwoPageMode() {
+      return window.innerWidth >= 1024;
+    }
+
+    // Reconstruye las opciones del selector según el modo de una o dos páginas.
+    function updatePageSelector() {
+      const selector = $("pageSelector");
+      const twoPageMode = isTwoPageMode();
+      selector.innerHTML = '<option value="0">Cubierta</option>';
+      const pageNumbers = twoPageMode ? [1, 3, 5, 7] : contentPages.map((_, index) => index + 1);
+      pageNumbers.forEach((pageNumber) => {
+        const option = document.createElement("option");
+        option.value = String(pageNumber);
+        option.textContent = twoPageMode
+          ? `Págs. ${pageNumber}–${Math.min(pageNumber + 1, contentPages.length)} · ${pageLabels[pageNumber - 1]}`
+          : `Pág. ${pageNumber} · ${pageLabels[pageNumber - 1]}`;
+        selector.append(option);
+      });
+    }
+
+    // Sincroniza botones, selector y contador con la página actualmente visible.
+    function updatePageControls() {
+      const twoPageMode = isTwoPageMode();
+      const selectorPage = currentPage === 0 ? 0 : twoPageMode ? Math.ceil(currentPage / 2) * 2 - 1 : currentPage;
+      $("pageSelector").value = String(selectorPage);
+      $("btnPrev").disabled = currentPage === 0;
+      const atEnd = twoPageMode
+        ? currentPage > 0 && Math.ceil(currentPage / 2) >= Math.ceil(contentPages.length / 2)
+        : currentPage >= contentPages.length;
+      $("btnNext").disabled = atEnd;
+      $("btnNext").innerHTML = currentPage === 0
+        ? 'Abrir <span aria-hidden="true">→</span>'
+        : atEnd ? "Final" : 'Siguiente <span aria-hidden="true">→</span>';
+      if (currentPage === 0) {
+        setText("pagePosition", "Cubierta");
+      } else if (twoPageMode) {
+        const firstPage = Math.ceil(currentPage / 2) * 2 - 1;
+        setText("pagePosition", `Págs. ${firstPage}–${Math.min(firstPage + 1, contentPages.length)} / ${contentPages.length}`);
+      } else {
+        setText("pagePosition", `Pág. ${currentPage} / ${contentPages.length}`);
+      }
+    }
+
+    // Activa la cubierta o páginas correspondientes y crea los gráficos al mostrarlos.
+    function renderCurrentPage(animate = true) {
+      const twoPageMode = isTwoPageMode();
+      const pages = [coverPage, ...contentPages];
+      pages.forEach((page) => page.classList.remove("active", "page-left", "page-right", "page-enter"));
+      if (currentPage === 0) {
+        notebookStage.classList.add("stage-closed");
+        notebookStage.classList.remove("stage-open");
+        coverPage.classList.add("active");
+      } else {
+        notebookStage.classList.remove("stage-closed");
+        notebookStage.classList.add("stage-open");
+        if (twoPageMode) {
+          const firstPage = Math.ceil(currentPage / 2) * 2 - 1;
+          const leftPage = contentPages[firstPage - 1];
+          const rightPage = contentPages[firstPage];
+          if (leftPage) leftPage.classList.add("active", "page-left");
+          if (rightPage) rightPage.classList.add("active", "page-right");
+          if (animate) [leftPage, rightPage].filter(Boolean).forEach((page) => {
+            page.offsetWidth;
+            page.classList.add("page-enter");
+          });
+          if (leftPage) leftPage.querySelector(".page-content-wrapper").scrollTop = 0;
+          if (rightPage) rightPage.querySelector(".page-content-wrapper").scrollTop = 0;
+        } else {
+          const page = contentPages[currentPage - 1];
+          if (page) {
+            page.classList.add("active");
+            if (animate) {
+              page.offsetWidth;
+              page.classList.add("page-enter");
+            }
+            page.querySelector(".page-content-wrapper").scrollTop = 0;
+          }
+        }
+      }
+      updatePageControls();
+      const chartPageVisible = $("page-8").classList.contains("active");
+      if (chartPageVisible && lastChartState && !chartInstances.frequency) {
+        renderCharts(lastChartState.rows, lastChartState.grouped, lastChartState.analysis);
+      } else if (!chartPageVisible && Object.keys(chartInstances).length) {
+        destroyCharts();
+      }
+      if (currentPage > 0) window.scrollTo({ top: 0, behavior: "smooth" });
+      window.requestAnimationFrame(() => Object.values(chartInstances).forEach((chart) => chart.resize()));
+    }
+
+    // Mantiene la página solicitada dentro del rango válido del cuaderno.
+    function navigateTo(pageNumber) {
+      currentPage = Math.max(0, Math.min(contentPages.length, pageNumber));
+      renderCurrentPage();
+    }
+
+    // Avanza una página en móvil o un pliego en escritorio.
+    function navigateNext() {
+      if (currentPage === 0) navigateTo(1);
+      else navigateTo(currentPage + (isTwoPageMode() ? 2 : 1));
+    }
+
+    // Retrocede respetando la cubierta y el modo de doble página.
+    function navigatePrevious() {
+      if (currentPage === 0) return;
+      if (isTwoPageMode()) {
+        const firstPage = Math.ceil(currentPage / 2) * 2 - 1;
+        navigateTo(firstPage === 1 ? 0 : firstPage - 2);
+      } else {
+        navigateTo(currentPage - 1);
+      }
+    }
+
+    // Conecta navegación, pantalla completa, redimensionado y atajos de teclado.
+    $("btnHome").addEventListener("click", () => navigateTo(0));
+    $("btnPrev").addEventListener("click", navigatePrevious);
+    $("btnNext").addEventListener("click", navigateNext);
+    $("btnEnd").addEventListener("click", () => navigateTo(isTwoPageMode() ? contentPages.length - 1 : contentPages.length));
+    $("pageSelector").addEventListener("change", (event) => navigateTo(Number(event.target.value)));
+    $("btnFullscreen").addEventListener("click", () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen?.();
+    });
+    window.addEventListener("resize", () => {
+      updatePageSelector();
+      renderCurrentPage(false);
+    });
+    window.addEventListener("keydown", (event) => {
+      if (["INPUT", "SELECT", "TEXTAREA", "BUTTON"].includes(document.activeElement.tagName)) return;
+      if (["ArrowRight", "PageDown"].includes(event.key)) navigateNext();
+      if (["ArrowLeft", "PageUp"].includes(event.key)) navigatePrevious();
+      if (event.key === "Home") navigateTo(0);
+      if (event.key === "End") navigateTo(isTwoPageMode() ? contentPages.length - 1 : contentPages.length);
+    });
+
+    // Prepara la vista inicial y carga el conjunto de demostración al abrir la app.
+    updatePageSelector();
+    renderCurrentPage(false);
+    loadValues([...SAMPLE_DATA], "Datos de ejemplo · tiempos de respuesta (ms)");
+  </script>
+</body>
+</html>

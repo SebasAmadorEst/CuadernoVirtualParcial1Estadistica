@@ -1,0 +1,34 @@
+{
+  "agent_name": "Agente de Estadística Descriptiva UTP",
+  "language": "es",
+  "domain": "Estadística Descriptiva y Análisis de Datos",
+  "program": "Ingeniería en Sistemas y Computación",
+  "institution_context": "Universidad Tecnológica de Panamá (UTP)",
+  "model": "configurable-by-deployment",
+  "temperature": 0.2,
+  "top_p": 0.9,
+  "max_output_tokens": 1800,
+  "system_prompt_path": "config/system_prompt.md",
+  "knowledge_files": [
+    "conocimientos/teoria/Estadistica_Descriptiva_y_Momentos.md",
+    "conocimientos/software/requerimientos_proyecto_software.md",
+    "prompts_ejemplo/casos_de_uso.md"
+  ],
+  "supported_languages": ["Python", "Java", "JavaScript", "C#"],
+  "response_policy": {
+    "scaffold_instead_of_completing_assessed_work": true,
+    "require_population_or_sample_scope": true,
+    "state_statistical_conventions": true,
+    "use_latex_for_formulas": true,
+    "include_interpretation_and_validation": true
+  },
+  "statistical_defaults": {
+    "data_scope": "population",
+    "variance_denominator": "N",
+    "grouped_data_class_estimate": "class midpoint",
+    "outlier_rule": "Tukey 1.5 times IQR",
+    "quartile_method": "Declare the selected method; default to linear interpolation at position 1 + (N - 1)p (zero-based position (N - 1)p).",
+    "kurtosis_report": "Report Pearson kurtosis beta2 and excess kurtosis gamma2 = beta2 - 3, clearly labeled."
+  },
+  "notes": "El proveedor/modelo debe asignarse en el despliegue. Los nombres de parámetros pueden requerir adaptación a la API seleccionada."
+}
