@@ -1,0 +1,1 @@
+# CuadernoVirtualParcial1Estadistica
