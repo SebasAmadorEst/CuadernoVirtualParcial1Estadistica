@@ -317,6 +317,17 @@
     .chart-canvas { position: relative; height: 255px; }
     .chart-panel.wide .chart-canvas { height: 285px; }
     .chart-note { margin: 8px 0 0; color: #7b8983; font-size: 10px; }
+    .kurtosis-visual { margin-top: 15px; }
+    .kurtosis-chart { display: block; width: 100%; height: auto; }
+    .kurtosis-grid { fill: none; stroke: #e5ebe5; stroke-width: 1; }
+    .kurtosis-axis-labels { fill: #687a73; font-family: var(--font-body); font-size: 11px; }
+    .kurtosis-curve { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .kurtosis-curve.uniform, .uniform-swatch { stroke: #5878a2; background: #5878a2; }
+    .kurtosis-curve.normal, .normal-swatch { stroke: #163b38; background: #163b38; }
+    .kurtosis-curve.laplace, .laplace-swatch { stroke: #d66b4d; background: #d66b4d; }
+    .kurtosis-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; color: #52655e; font-size: 11px; }
+    .kurtosis-legend span { display: inline-flex; align-items: center; gap: 7px; }
+    .kurtosis-legend i { width: 17px; height: 3px; border-radius: 2px; }
     .empty-chart { display: grid; height: 100%; place-items: center; color: #89968f; font-size: 12px; }
     .footnote { display: flex; justify-content: space-between; gap: 16px; margin-top: 20px; padding: 12px 2px 0; border-top: 1px solid #dce4dc; color: #75837c; font-size: 11px; }
     .mono { font-family: var(--font-mono); }
@@ -884,6 +895,36 @@
           <p class="interpretation gold" id="kurtosisInterpretation">La curtosis no es por sí sola un conteo de valores atípicos.</p>
         </div>
       </div>
+      <article class="kurtosis-visual" aria-labelledby="kurtosisChartTitle">
+        <h3 class="chart-title" id="kurtosisChartTitle">Cómo cambia la forma según el exceso de curtosis</h3>
+        <svg class="kurtosis-chart" viewBox="0 0 600 290" role="img" aria-labelledby="kurtosisSvgTitle kurtosisSvgDesc">
+          <title id="kurtosisSvgTitle">Comparación de distribuciones con distintos excesos de curtosis</title>
+          <desc id="kurtosisSvgDesc">Distribución uniforme con exceso menos 1.2, normal con exceso cero y Laplace con exceso 3. Las tres tienen media cero y desviación estándar uno.</desc>
+          <g class="kurtosis-grid">
+            <path d="M55 225H565 M55 174H565 M55 123H565 M55 72H565 M55 21H565" />
+            <path d="M55 21V225 M140 21V225 M225 21V225 M310 21V225 M395 21V225 M480 21V225 M565 21V225" />
+          </g>
+          <g class="kurtosis-axis-labels">
+            <text x="47" y="229" text-anchor="end">0</text><text x="47" y="178" text-anchor="end">0.2</text>
+            <text x="47" y="127" text-anchor="end">0.4</text><text x="47" y="76" text-anchor="end">0.6</text>
+            <text x="55" y="244" text-anchor="middle">−3</text><text x="140" y="244" text-anchor="middle">−2</text>
+            <text x="225" y="244" text-anchor="middle">−1</text><text x="310" y="244" text-anchor="middle">0</text>
+            <text x="395" y="244" text-anchor="middle">1</text><text x="480" y="244" text-anchor="middle">2</text>
+            <text x="565" y="244" text-anchor="middle">3</text>
+            <text x="310" y="270" text-anchor="middle">Valor estandarizado (z)</text>
+            <text transform="translate(14 123) rotate(-90)" text-anchor="middle">Densidad</text>
+          </g>
+          <path class="kurtosis-curve uniform" d="M55 225 H162.8 V151.5 H457.2 V225 H565" />
+          <path class="kurtosis-curve normal" d="M55 224 C93 223 116 220 140 215 C172 207 197 190 225 164 C255 136 281 125 310 123 C339 125 365 136 395 164 C423 190 448 207 480 215 C504 220 527 223 565 224" />
+          <path class="kurtosis-curve laplace" d="M55 222 C105 219 145 213 182 202 C226 189 270 166 310 45 C350 166 394 189 438 202 C475 213 515 219 565 222" />
+        </svg>
+        <div class="kurtosis-legend" aria-label="Leyenda de distribuciones">
+          <span><i class="uniform-swatch"></i>Uniforme · γ₂ = −1.2</span>
+          <span><i class="normal-swatch"></i>Normal · γ₂ = 0</span>
+          <span><i class="laplace-swatch"></i>Laplace · γ₂ = 3</span>
+        </div>
+        <p class="chart-note">Ejemplos teóricos con la misma media (0) y desviación estándar (1). El exceso refleja el peso relativo de las desviaciones alejadas; no es simplemente una medida de qué tan alto es el pico.</p>
+      </article>
       <p class="field-hint" style="margin-top:12px">Interpretación orientativa: |γ₁| ≤ 0.5 aproximadamente simétrica; exceso de curtosis entre −0.5 y 0.5 aproximadamente mesocúrtica. Estos umbrales son descriptivos, no universales.</p>
     </section>
     <aside class="formula-sheet" aria-label="Fórmulas de momentos, asimetría y curtosis">

@@ -129,3 +129,14 @@ El código de la aplicación está concentrado en `index.html`:
 - Funciones de navegación: paginación, modo doble en escritorio, pantalla completa y atajos.
 
 El mismo archivo incluye comentarios de orientación antes de los principales componentes y funciones. Al cambiar una fórmula, revisa tanto su cálculo como la explicación visible en la página y este README.
+
+## Atajos de teclado
+
+Cuando el foco no está en un campo o botón, se puede avanzar con **→** o **Page Down**, retroceder con **←** o **Page Up**, ir a la cubierta con **Home** y a la última página con **End**.
+
+## Material de referencia
+
+- [Teoría de estadística descriptiva y momentos](Agente_Estadistica/conocimientos/teoria/Estadistica_Descriptiva_y_Momentos.md)
+- [Requerimientos de los módulos del software](Agente_Estadistica/conocimientos/software/requerimientos_proyecto_software.md)
+- [Prompt del tutor educativo](Agente_Estadistica/config/system_prompt.md)
+- [Casos de uso de ejemplo](Agente_Estadistica/prompts_ejemplo/casos_de_uso.md)
