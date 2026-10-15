@@ -319,15 +319,18 @@
     .chart-note { margin: 8px 0 0; color: #7b8983; font-size: 10px; }
     .kurtosis-visual { margin-top: 15px; }
     .kurtosis-chart { display: block; width: 100%; height: auto; }
-    .kurtosis-grid { fill: none; stroke: #e5ebe5; stroke-width: 1; }
-    .kurtosis-axis-labels { fill: #687a73; font-family: var(--font-body); font-size: 11px; }
+    .kurtosis-grid { stroke: #e5ebe5; stroke-width: 1; }
+    .kurtosis-axis-labels, .kurtosis-summary { fill: #687a73; font-family: var(--font-body); font-size: 11px; }
     .kurtosis-curve { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-    .kurtosis-curve.uniform, .uniform-swatch { stroke: #5878a2; background: #5878a2; }
-    .kurtosis-curve.normal, .normal-swatch { stroke: #163b38; background: #163b38; }
-    .kurtosis-curve.laplace, .laplace-swatch { stroke: #d66b4d; background: #d66b4d; }
+    .kurtosis-curve.observed { stroke: var(--coral); }
+    .kurtosis-curve.reference { stroke: var(--forest); stroke-width: 2; stroke-dasharray: 6 4; }
+    .kurtosis-mean { stroke: var(--blue); stroke-width: 1.5; stroke-dasharray: 3 4; }
+    .kurtosis-empty { fill: #687a73; font-family: var(--font-body); font-size: 14px; }
     .kurtosis-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; color: #52655e; font-size: 11px; }
     .kurtosis-legend span { display: inline-flex; align-items: center; gap: 7px; }
     .kurtosis-legend i { width: 17px; height: 3px; border-radius: 2px; }
+    .kde-swatch { background: var(--coral); }
+    .normal-swatch { background: var(--forest); }
     .empty-chart { display: grid; height: 100%; place-items: center; color: #89968f; font-size: 12px; }
     .footnote { display: flex; justify-content: space-between; gap: 16px; margin-top: 20px; padding: 12px 2px 0; border-top: 1px solid #dce4dc; color: #75837c; font-size: 11px; }
     .mono { font-family: var(--font-mono); }
@@ -896,34 +899,15 @@
         </div>
       </div>
       <article class="kurtosis-visual" aria-labelledby="kurtosisChartTitle">
-        <h3 class="chart-title" id="kurtosisChartTitle">Cómo cambia la forma según el exceso de curtosis</h3>
-        <svg class="kurtosis-chart" viewBox="0 0 600 290" role="img" aria-labelledby="kurtosisSvgTitle kurtosisSvgDesc">
-          <title id="kurtosisSvgTitle">Comparación de distribuciones con distintos excesos de curtosis</title>
-          <desc id="kurtosisSvgDesc">Distribución uniforme con exceso menos 1.2, normal con exceso cero y Laplace con exceso 3. Las tres tienen media cero y desviación estándar uno.</desc>
-          <g class="kurtosis-grid">
-            <path d="M55 225H565 M55 174H565 M55 123H565 M55 72H565 M55 21H565" />
-            <path d="M55 21V225 M140 21V225 M225 21V225 M310 21V225 M395 21V225 M480 21V225 M565 21V225" />
-          </g>
-          <g class="kurtosis-axis-labels">
-            <text x="47" y="229" text-anchor="end">0</text><text x="47" y="178" text-anchor="end">0.2</text>
-            <text x="47" y="127" text-anchor="end">0.4</text><text x="47" y="76" text-anchor="end">0.6</text>
-            <text x="55" y="244" text-anchor="middle">−3</text><text x="140" y="244" text-anchor="middle">−2</text>
-            <text x="225" y="244" text-anchor="middle">−1</text><text x="310" y="244" text-anchor="middle">0</text>
-            <text x="395" y="244" text-anchor="middle">1</text><text x="480" y="244" text-anchor="middle">2</text>
-            <text x="565" y="244" text-anchor="middle">3</text>
-            <text x="310" y="270" text-anchor="middle">Valor estandarizado (z)</text>
-            <text transform="translate(14 123) rotate(-90)" text-anchor="middle">Densidad</text>
-          </g>
-          <path class="kurtosis-curve uniform" d="M55 225 H162.8 V151.5 H457.2 V225 H565" />
-          <path class="kurtosis-curve normal" d="M55 224 C93 223 116 220 140 215 C172 207 197 190 225 164 C255 136 281 125 310 123 C339 125 365 136 395 164 C423 190 448 207 480 215 C504 220 527 223 565 224" />
-          <path class="kurtosis-curve laplace" d="M55 222 C105 219 145 213 182 202 C226 189 270 166 310 45 C350 166 394 189 438 202 C475 213 515 219 565 222" />
+        <h3 class="chart-title" id="kurtosisChartTitle">Asimetría y curtosis de los datos</h3>
+        <svg class="kurtosis-chart" id="kurtosisChart" viewBox="0 0 600 290" role="img" aria-label="Curva de densidad de los datos y referencia normal">
+          <text class="kurtosis-empty" x="300" y="145" text-anchor="middle">Carga datos para visualizar su distribución.</text>
         </svg>
-        <div class="kurtosis-legend" aria-label="Leyenda de distribuciones">
-          <span><i class="uniform-swatch"></i>Uniforme · γ₂ = −1.2</span>
-          <span><i class="normal-swatch"></i>Normal · γ₂ = 0</span>
-          <span><i class="laplace-swatch"></i>Laplace · γ₂ = 3</span>
+        <div class="kurtosis-legend" aria-label="Leyenda de curvas">
+          <span><i class="kde-swatch"></i>Densidad estimada de los datos</span>
+          <span><i class="normal-swatch"></i>Normal de referencia</span>
         </div>
-        <p class="chart-note">Ejemplos teóricos con la misma media (0) y desviación estándar (1). El exceso refleja el peso relativo de las desviaciones alejadas; no es simplemente una medida de qué tan alto es el pico.</p>
+        <p class="chart-note" id="kurtosisChartNote">El desplazamiento de la curva sólida muestra la asimetría; sus colas, comparadas con la normal discontinua, ayudan a interpretar la curtosis. γ₁ y γ₂ se calculan con los valores originales.</p>
       </article>
       <p class="field-hint" style="margin-top:12px">Interpretación orientativa: |γ₁| ≤ 0.5 aproximadamente simétrica; exceso de curtosis entre −0.5 y 0.5 aproximadamente mesocúrtica. Estos umbrales son descriptivos, no universales.</p>
     </section>
@@ -1211,6 +1195,58 @@
       chartInstances = {};
     }
 
+    function renderMomentShapeChart(analysis) {
+      const chart = $("kurtosisChart");
+      if (!analysis) {
+        chart.innerHTML = '<text class="kurtosis-empty" x="300" y="145" text-anchor="middle">Carga datos para visualizar su distribución.</text>';
+        chart.setAttribute("aria-label", "Gráfica vacía; carga datos para visualizar asimetría y curtosis");
+        return;
+      }
+
+      const { sorted, n, mean, momentSigma, skewness, excessKurtosis } = analysis;
+      const skewLabel = skewness === null ? "no definida" : formatNumber(skewness);
+      const kurtosisLabel = excessKurtosis === null ? "no definida" : formatNumber(excessKurtosis);
+      const summary = `n = ${n} · γ₁ = ${skewLabel} · γ₂ = ${kurtosisLabel}`;
+      if (momentSigma === 0) {
+        chart.innerHTML = `<text class="kurtosis-summary" x="58" y="24">${summary}</text><text class="kurtosis-empty" x="300" y="145" text-anchor="middle">La forma no se define si todos los valores son iguales.</text>`;
+        chart.setAttribute("aria-label", `${summary}. Asimetría y curtosis no definidas porque todos los valores son iguales`);
+        return;
+      }
+
+      const standardized = sorted.map((value) => (value - mean) / momentSigma);
+      const bandwidth = 1.06 * Math.pow(n, -0.2);
+      const xMinimum = Math.min(-4, Math.min(...standardized) - 2 * bandwidth);
+      const xMaximum = Math.max(4, Math.max(...standardized) + 2 * bandwidth);
+      const plot = { left: 58, right: 570, top: 40, bottom: 222 };
+      const plotWidth = plot.right - plot.left;
+      const plotHeight = plot.bottom - plot.top;
+      const pointCount = 121;
+      const densityAt = (x) => standardized.reduce((sum, value) => {
+        const distance = (x - value) / bandwidth;
+        return sum + Math.exp(-0.5 * distance * distance);
+      }, 0) / (n * bandwidth * Math.sqrt(2 * Math.PI));
+      const normalAt = (x) => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+      const points = Array.from({ length: pointCount }, (_, index) => {
+        const x = xMinimum + (index / (pointCount - 1)) * (xMaximum - xMinimum);
+        return { x, observed: densityAt(x), reference: normalAt(x) };
+      });
+      const maxDensity = Math.max(...points.map((point) => Math.max(point.observed, point.reference))) * 1.12;
+      const xFor = (value) => plot.left + ((value - xMinimum) / (xMaximum - xMinimum)) * plotWidth;
+      const yFor = (value) => plot.bottom - (value / maxDensity) * plotHeight;
+      const curvePath = (key) => points.map((point, index) => `${index === 0 ? "M" : "L"}${xFor(point.x).toFixed(2)} ${yFor(point[key]).toFixed(2)}`).join(" ");
+      const densityTicks = [0, maxDensity / 2, maxDensity];
+      const grid = densityTicks.map((tick) => {
+        const y = yFor(tick);
+        const label = formatNumber(Number(tick.toPrecision(2)));
+        return `<line class="kurtosis-grid" x1="${plot.left}" y1="${y}" x2="${plot.right}" y2="${y}" /><text class="kurtosis-axis-labels" x="${plot.left - 9}" y="${y + 4}" text-anchor="end">${label}</text>`;
+      }).join("");
+      const xTickValues = [xMinimum, ...[-3, -2, -1, 0, 1, 2, 3].filter((value) => value > xMinimum && value < xMaximum), xMaximum];
+      const xTicks = xTickValues.map((value) => `<text class="kurtosis-axis-labels" x="${xFor(value)}" y="${plot.bottom + 19}" text-anchor="middle">${formatNumber(value)}</text>`).join("");
+      const meanLine = `<line class="kurtosis-mean" x1="${xFor(0)}" y1="${plot.top}" x2="${xFor(0)}" y2="${plot.bottom}" />`;
+      chart.innerHTML = `<text class="kurtosis-summary" x="${plot.left}" y="20">${summary}</text><g>${grid}</g>${meanLine}<path class="kurtosis-curve reference" d="${curvePath("reference")}" /><path class="kurtosis-curve observed" d="${curvePath("observed")}" /><path d="M${plot.left} ${plot.bottom}H${plot.right}" fill="none" stroke="#687a73" /><g>${xTicks}</g><text class="kurtosis-axis-labels" x="${(plot.left + plot.right) / 2}" y="${plot.bottom + 43}" text-anchor="middle">Valores estandarizados (z)</text><text class="kurtosis-axis-labels" transform="translate(15 ${(plot.top + plot.bottom) / 2}) rotate(-90)" text-anchor="middle">Densidad</text>`;
+      chart.setAttribute("aria-label", `Densidad estimada de ${n} datos comparada con la normal; asimetría ${skewLabel}, exceso de curtosis ${kurtosisLabel}`);
+    }
+
     // Dibuja frecuencias, caja y bigotes, y proporciones con Chart.js.
     function renderCharts(rows, grouped, analysis) {
       if (typeof Chart === "undefined") {
@@ -1402,6 +1438,10 @@
       setText("kurtosisValue", excessKurtosis === null ? "No definida" : formatNumber(excessKurtosis));
       setFlag("kurtosisFlag", shape.kurtLabel, shape.kurtKind);
       setText("kurtosisInterpretation", shape.kurtText);
+      renderMomentShapeChart(analysis);
+      setText("kurtosisChartNote", momentSigma === 0
+        ? "Como todos los valores son iguales, la dispersión es cero y no se definen la asimetría ni la curtosis."
+        : "El desplazamiento de la curva sólida muestra la asimetría; sus colas, comparadas con la normal discontinua, ayudan a interpretar la curtosis. γ₁ y γ₂ se calculan con los valores originales.");
       setText("frequencyChartNote", grouped ? "Intervalos calculados con Sturges; barras contiguas representan clases cuantitativas." : "Valores observados distintos; barras separadas representan frecuencias discretas.");
       setText("footerSummary", `${countSymbol} = ${n} · Varianza: divisor ${isSample ? "n − 1" : "N"} · Momentos descriptivos: divisor ${countSymbol}`);
       lastChartState = { rows, grouped, analysis };
@@ -1590,6 +1630,8 @@
       setText("dispersionInterpretation", "El CV compara la desviación con la magnitud de la media; no es útil si la media es cercana a cero.");
       setText("skewInterpretation", "El signo de γ₁ orienta sobre la cola más influyente; contrástalo con el histograma.");
       setText("kurtosisInterpretation", "La curtosis no es por sí sola un conteo de valores atípicos.");
+      renderMomentShapeChart(null);
+      setText("kurtosisChartNote", "El desplazamiento de la curva sólida muestra la asimetría; sus colas, comparadas con la normal discontinua, ayudan a interpretar la curtosis. γ₁ y γ₂ se calculan con los valores originales.");
       destroyCharts();
       showNotice("Datos limpiados. Ingresa una muestra o población, o carga el conjunto de ejemplo.", "info");
       setText("footerSummary", "Los datos permanecen en este navegador y no se envían a un servidor.");
